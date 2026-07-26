@@ -1,631 +1,906 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#171512">
-<title>ਲਿੰਕ ਪਾਠ · Link Reader</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Source+Serif+4:opsz,ital,wght@8..60,0,400;8..60,0,600;8..60,1,400&display=swap" rel="stylesheet">
-<style>
-:root{
-  --ink:#171512; --paper:#F7F3E9; --paper-2:#EFE9DA; --rule:#D8D0BC;
-  --press:#9E1B1B; --press-2:#C9403A; --muted:#6E6656;
-  --ui:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --disp:"Fraunces",Georgia,serif; --read:"Source Serif 4",Georgia,"Noto Serif",serif;
-}
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{height:100%}
-body{font-family:var(--ui);background:var(--paper);color:var(--ink);min-height:100%;
-  padding-bottom:env(safe-area-inset-bottom)}
-button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer}
-input,select{font-family:inherit}
-.hide{display:none!important}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0a1628" />
+  <title>The Tribune • Easy Read</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f4ef;
+      --surface: #ffffff;
+      --text: #1a1a1a;
+      --text-secondary: #5c5c5c;
+      --accent: #c41e3a;
+      --accent-soft: #fdf0f2;
+      --border: #e8e4dc;
+      --shadow: 0 4px 24px rgba(0,0,0,0.06);
+      --radius: 16px;
+      --header-h: 56px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
 
-header.mast{padding:calc(14px + env(safe-area-inset-top)) 18px 10px;border-bottom:3px double var(--ink);
-  display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
-.mast h1{font-family:var(--disp);font-weight:700;font-size:24px;letter-spacing:-.01em;line-height:1}
-.mast h1 small{display:block;font-family:var(--ui);font-weight:600;font-size:10px;letter-spacing:.2em;
-  text-transform:uppercase;color:var(--press);margin-top:5px}
-.mast .gear{font-size:13px;font-weight:600;color:var(--muted);border:1px solid var(--rule);
-  border-radius:999px;padding:7px 12px;background:#fff8}
-.dateline{padding:7px 18px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
-  border-bottom:1px solid var(--rule);display:flex;justify-content:space-between}
+    [data-theme="dark"] {
+      --bg: #0a1628;
+      --surface: #132038;
+      --text: #f0ece4;
+      --text-secondary: #a8b0bc;
+      --accent: #ff4d6d;
+      --accent-soft: #2a1520;
+      --border: #1e2d45;
+      --shadow: 0 4px 24px rgba(0,0,0,0.35);
+    }
 
-.wrap{padding:16px 18px 40px;max-width:720px;margin:0 auto}
-.drop{margin-top:6px;border:2px dashed var(--rule);border-radius:14px;background:#fff7;padding:22px 16px}
-.drop .big{font-family:var(--disp);font-weight:600;font-size:19px;text-align:center}
-.drop p{color:var(--muted);font-size:13px;margin:6px 0 12px;line-height:1.5;text-align:center}
-.linkrow{display:flex;gap:8px}
-.linkrow input{flex:1;min-width:0;padding:13px 14px;border:1px solid var(--rule);border-radius:12px;background:#fff;font-size:14px;outline:none}
-.btn{display:inline-block;background:var(--press);color:#FBF6EA;font-weight:700;font-size:15px;
-  padding:13px 20px;border-radius:999px;box-shadow:0 2px 0 #6d1010;white-space:nowrap}
-.btn:active{transform:translateY(1px);box-shadow:none}
-.btn.ghost{background:transparent;color:var(--press);box-shadow:none;border:1.5px solid var(--press)}
-.btn.block{display:block;width:100%;text-align:center}
-.hintline{margin-top:10px;font-size:11.5px;color:var(--muted);text-align:center;line-height:1.5}
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-.sec-label{margin:24px 0 8px;font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
-  color:var(--muted);display:flex;align-items:center;gap:10px}
-.sec-label::after{content:"";flex:1;height:1px;background:var(--rule)}
-.tile{background:#fff9;border:1px solid var(--rule);border-radius:12px;padding:13px 14px;margin-bottom:10px;
-  display:flex;gap:12px;align-items:center}
-.tile .fav{width:34px;height:34px;border-radius:8px;background:var(--paper-2);display:flex;align-items:center;
-  justify-content:center;font-family:var(--disp);font-weight:700;color:var(--press);font-size:16px;flex:none;overflow:hidden}
-.tile .fav img{width:100%;height:100%;object-fit:cover}
-.tile .meta{flex:1;min-width:0}
-.tile .meta b{font-size:14.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tile .meta i{font-style:normal;color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
-.tile .del{color:var(--muted);font-size:17px;padding:8px}
-.empty{color:var(--muted);font-size:13px;padding:8px 2px;line-height:1.5}
+    html, body {
+      height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      overflow-x: hidden;
+      transition: background 0.3s, color 0.3s;
+    }
 
-.load{max-width:720px;margin:0 auto;padding:40px 24px;text-align:center}
-.spinner{width:34px;height:34px;border:3px solid var(--rule);border-top-color:var(--press);
-  border-radius:50%;margin:0 auto 16px;animation:spin 1s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.load .stat{font-family:var(--disp);font-weight:600;font-size:18px}
-.load .sub{color:var(--muted);font-size:13px;margin-top:6px;word-break:break-all}
+    /* ========== HEADER ========== */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: calc(var(--header-h) + var(--safe-top));
+      padding-top: var(--safe-top);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-left: 16px;
+      padding-right: 16px;
+      backdrop-filter: blur(12px);
+    }
 
-#reader{position:fixed;inset:0;z-index:20;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  background:var(--r-bg,#FDFBF4);color:var(--r-ink,#1D1A15)}
-.rtop{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;
-  padding:calc(10px + env(safe-area-inset-top)) 14px 10px;background:var(--r-bg,#FDFBF4);
-  border-bottom:1px solid var(--r-rule,#E4DECC);z-index:2}
-.rtop button{font-size:14px;font-weight:700;padding:6px 10px;color:var(--r-mut,#7A7160)}
-.rtop .aa{font-family:var(--disp);font-size:16px;border:1px solid var(--r-rule,#E4DECC);border-radius:999px;padding:5px 14px}
-.rbody{max-width:640px;margin:0 auto;padding:26px 22px 40px}
-.rbody h2{font-family:var(--disp);font-weight:700;font-size:calc(var(--fs,19px)*1.45);line-height:1.22;letter-spacing:-.01em}
-.rbody .srcline{margin-top:12px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--r-mut,#7A7160);word-break:break-all}
-.rbody hr{border:none;border-top:3px double var(--r-rule,#E4DECC);margin:18px 0 22px}
-.prose{font-family:var(--read);font-size:var(--fs,19px);line-height:var(--lh,1.72)}
-.prose.sans{font-family:var(--ui)}
-.prose.just p{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
-.prose p{margin-bottom:1.05em}
-.prose h3{font-family:var(--disp);font-size:1.15em;margin:1.2em 0 .5em}
-.prose a{color:var(--press-2)}
-.prose img{max-width:100%;height:auto;border-radius:8px;margin:.6em 0}
-.rbody .openorig{display:inline-block;margin-top:24px;font-size:13px;font-weight:700;color:var(--press-2);
-  border:1.5px solid var(--r-rule,#E4DECC);border-radius:999px;padding:9px 16px}
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-#aaPanel{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--r-bg,#FDFBF4);color:var(--r-ink,#1D1A15);
-  border-top:1px solid var(--r-rule,#E4DECC);border-radius:18px 18px 0 0;padding:16px 18px calc(20px + env(safe-area-inset-bottom));
-  box-shadow:0 -12px 40px #0003;transform:translateY(105%);transition:transform .25s}
-#aaPanel.open{transform:none}
-.aa-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-.aa-row label{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--r-mut,#7A7160);width:64px}
-.aa-row input[type=range]{flex:1;accent-color:var(--press-2)}
-.seg{display:flex;flex:1;border:1.5px solid var(--r-rule,#E4DECC);border-radius:999px;overflow:hidden}
-.seg button{flex:1;padding:9px 4px;font-size:13px;font-weight:600;color:var(--r-mut,#7A7160)}
-.seg button.on{background:var(--press);color:#FBF6EA}
-.swatches{display:flex;gap:10px;flex:1}
-.sw{flex:1;height:42px;border-radius:10px;border:2px solid transparent;font-family:var(--read);font-size:15px}
-.sw.on{border-color:var(--press-2)}
-.sw[data-th=paper]{background:#FDFBF4;color:#1D1A15}
-.sw[data-th=sepia]{background:#F3E5C8;color:#46351D}
-.sw[data-th=slate]{background:#191C21;color:#D8D4CA}
-.sw[data-th=black]{background:#000;color:#B9B5AC}
-.scrim{position:fixed;inset:0;z-index:25;background:#0005}
-.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:var(--paper);
-  padding:11px 18px;border-radius:999px;font-size:13px;z-index:60;box-shadow:0 8px 30px #0006;max-width:88%;text-align:center}
-.modal{position:fixed;inset:0;z-index:40;background:#000a;display:flex;align-items:flex-end;justify-content:center}
-.sheet{background:var(--paper);width:100%;max-width:560px;border-radius:18px 18px 0 0;
-  padding:20px 20px calc(24px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}
-.sheet h2{font-family:var(--disp);font-size:20px;margin-bottom:4px}
-.sheet .note{font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:14px}
-.field{margin-bottom:14px}
-.field label{display:block;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-.field input,.field select{width:100%;padding:12px 13px;border:1px solid var(--rule);border-radius:10px;background:#fff;font-size:14px}
-</style>
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .brand-text {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.3px;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-top: -2px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: none;
+      background: var(--bg);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .icon-btn:active { transform: scale(0.94); }
+
+    /* ========== VIEWS ========== */
+    .view { display: none; min-height: calc(100% - var(--header-h)); }
+    .view.active { display: block; }
+
+    /* ========== HOME / LIST ========== */
+    .home-content {
+      padding: 16px 16px 100px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .date-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .section-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    /* Paste new link card */
+    .paste-card {
+      background: var(--surface);
+      border: 1.5px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 24px;
+      transition: border-color 0.2s;
+    }
+    .paste-card:focus-within { border-color: var(--accent); }
+
+    .paste-label {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .paste-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 10px;
+    }
+    .paste-input:focus { border-color: var(--accent); }
+
+    .paste-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .paste-btn:active { opacity: 0.85; }
+
+    .paste-hint {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    /* Article cards */
+    .article-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 1px solid transparent;
+    }
+    .article-card:active {
+      transform: scale(0.985);
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .category {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .card-time {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      font-weight: 600;
+      line-height: 1.35;
+      margin-bottom: 8px;
+      letter-spacing: -0.2px;
+    }
+
+    .card-summary {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* ========== ARTICLE VIEW ========== */
+    .article-view {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 0 80px;
+    }
+
+    .article-header {
+      padding: 20px 20px 0;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 16px;
+      padding: 4px 0;
+    }
+
+    .article-category {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .article-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.25;
+      letter-spacing: -0.4px;
+      margin-bottom: 14px;
+    }
+
+    .article-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .article-body {
+      padding: 0 20px;
+      font-size: 17px;
+      line-height: 1.75;
+      color: var(--text);
+    }
+
+    .article-body p {
+      margin-bottom: 18px;
+    }
+
+    .article-body blockquote {
+      border-left: 3px solid var(--accent);
+      padding-left: 16px;
+      margin: 24px 0;
+      font-style: italic;
+      color: var(--text-secondary);
+    }
+
+    /* Font size controls */
+    .reader-controls {
+      position: fixed;
+      bottom: calc(20px + var(--safe-bottom));
+      right: 16px;
+      display: flex;
+      gap: 8px;
+      z-index: 50;
+    }
+
+    .ctrl-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      border: none;
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow);
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+
+    /* Empty / loading states */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--text);
+      color: var(--bg);
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 200;
+      max-width: 90%;
+      text-align: center;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Modal for paste confirmation */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 300;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 16px;
+      padding-bottom: calc(16px + var(--safe-bottom));
+    }
+    .modal-overlay.show { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 24px;
+      width: 100%;
+      max-width: 400px;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(40px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+    .modal p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .modal-btn {
+      flex: 1;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .modal-btn.primary {
+      background: var(--accent);
+      color: white;
+    }
+    .modal-btn.secondary {
+      background: var(--bg);
+      color: var(--text);
+    }
+  </style>
 </head>
 <body>
-
-<!-- HOME -->
-<div id="vHome">
-  <header class="mast">
-    <h1>ਲਿੰਕ ਪਾਠ<small>Link Reader · clean &amp; save</small></h1>
-    <button class="gear" id="btnSettings">⚙</button>
-  </header>
-  <div class="dateline"><span id="todayLine"></span><span>v1</span></div>
-  <div class="wrap">
-    <div class="drop">
-      <div class="big">Paste or share a link</div>
-      <p>Paste an article to read it clean — or a section/home page (like tribuneindia.com) to list every article on it, then tap to read each. Saved as shortcuts you reopen anytime.</p>
-      <div class="linkrow">
-        <input id="urlInput" type="url" inputmode="url" placeholder="https://…" autocomplete="off">
-        <button class="btn" id="btnGo">Read</button>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-logo">T</div>
+      <div>
+        <div class="brand-text">The Tribune</div>
+        <div class="brand-sub">Easy Read Mode</div>
       </div>
-      <div class="hintline">Tip: in any app use Share → copy the URL, or long-press a link → Copy, then paste here.</div>
     </div>
-    <div class="sec-label">Saved Shortcuts</div>
-    <div id="libList"></div>
-  </div>
-</div>
-
-<!-- INDEX LIST (all articles on a section/home page) -->
-<div id="vList" class="hide">
-  <div style="position:sticky;top:0;z-index:5;background:var(--paper)">
-    <header class="mast">
-      <h1 id="listTitle" style="font-size:20px">Articles<small id="listSub">—</small></h1>
-      <button class="gear" id="btnListBack">‹ Home</button>
-    </header>
-  </div>
-  <div class="wrap" id="listWrap" style="padding-top:8px"></div>
-  <div id="prepBar" class="wrap hide" style="padding-top:0">
-    <button class="btn block" id="btnPrepAll">⬇ Fetch &amp; typeset all articles</button>
-    <div id="prepBox" class="hide" style="margin-top:14px">
-      <div class="pressbar" style="height:14px;border:1.5px solid var(--ink);border-radius:999px;overflow:hidden;background:#fff8">
-        <i id="prepFill" style="display:block;height:100%;width:0%;background:repeating-linear-gradient(45deg,var(--press),var(--press) 8px,var(--press-2) 8px,var(--press-2) 16px);transition:width .3s"></i>
-      </div>
-      <div id="prepStat" style="font-family:var(--disp);font-weight:600;font-size:16px;margin-top:10px;text-align:center">—</div>
-      <div id="prepLog" style="margin-top:12px;background:#fff8;border:1px solid var(--rule);border-radius:12px;padding:10px 12px;font-size:12px;color:var(--muted);max-height:200px;overflow:auto;line-height:1.7"></div>
+    <div class="header-actions">
+      <button class="icon-btn" id="themeToggle" title="Toggle dark mode" aria-label="Toggle theme">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
     </div>
-  </div>
-</div>
-
-<!-- LOADING -->
-<div id="vLoad" class="hide">
-  <header class="mast">
-    <h1>Fetching…<small>Link Reader</small></h1>
-    <button class="gear" id="btnLoadBack">✕</button>
   </header>
-  <div class="load">
-    <div class="spinner"></div>
-    <div class="stat" id="loadStat">Reaching the page…</div>
-    <div class="sub" id="loadSub"></div>
-  </div>
-</div>
 
-<!-- READER -->
-<div id="reader" class="hide">
-  <div class="rtop">
-    <button id="btnRdBack">‹ Home</button>
-    <div style="display:flex;gap:6px;align-items:center">
-      <button id="btnSave" style="font-size:19px">☆</button>
-      <button class="aa" id="btnAa">Aa</button>
+  <!-- HOME VIEW -->
+  <div id="homeView" class="view active">
+    <div class="home-content">
+      <div class="date-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Sunday, 26 July 2026
+      </div>
+
+      <h1 class="section-title">Today’s Headlines</h1>
+      <p class="section-sub">12 stories curated for easy mobile reading</p>
+
+      <!-- Paste new newspaper link -->
+      <div class="paste-card">
+        <div class="paste-label">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Load a different newspaper
+        </div>
+        <input type="url" class="paste-input" id="newLinkInput" placeholder="Paste any digital newspaper homepage link…" />
+        <button class="paste-btn" id="submitNewLink">Generate Reader</button>
+        <p class="paste-hint">Works best with homepage URLs (e.g. tribuneindia.com, indianexpress.com, thehindu.com)</p>
+      </div>
+
+      <!-- Article list will be injected here -->
+      <div id="articleList"></div>
     </div>
   </div>
-  <div class="rbody">
-    <h2 id="rdHead"></h2>
-    <div class="srcline" id="rdSrc"></div>
-    <hr>
-    <div class="prose" id="rdBody"></div>
-    <a id="rdOrig" class="openorig" target="_blank" rel="noopener">Open original page ↗</a>
-  </div>
-</div>
 
-<div class="scrim hide" id="scrim"></div>
-<div id="aaPanel">
-  <div class="aa-row"><label>Size</label><input type="range" id="ctlSize" min="15" max="26" step="1"></div>
-  <div class="aa-row"><label>Spacing</label><input type="range" id="ctlLh" min="1.4" max="2.1" step="0.05"></div>
-  <div class="aa-row"><label>Font</label>
-    <div class="seg">
-      <button data-font="serif" id="fSerif">Serif</button>
-      <button data-font="sans" id="fSans">Sans</button>
-      <button data-font="just" id="fJust">Justify</button>
+  <!-- ARTICLE VIEW -->
+  <div id="articleView" class="view">
+    <div class="article-view">
+      <div class="article-header">
+        <button class="back-btn" id="backBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          Headlines
+        </button>
+        <div class="article-category" id="artCategory"></div>
+        <h1 class="article-title" id="artTitle"></h1>
+        <div class="article-meta">
+          <span id="artAuthor"></span>
+          <span id="artTime"></span>
+        </div>
+      </div>
+      <div class="article-body" id="artBody"></div>
     </div>
   </div>
-  <div class="aa-row"><label>Page</label>
-    <div class="swatches">
-      <button class="sw" data-th="paper">Aa</button>
-      <button class="sw" data-th="sepia">Aa</button>
-      <button class="sw" data-th="slate">Aa</button>
-      <button class="sw" data-th="black">Aa</button>
+
+  <!-- Reader controls (font size) -->
+  <div class="reader-controls" id="readerControls" style="display:none;">
+    <button class="ctrl-btn" id="fontDown" title="Smaller text">A−</button>
+    <button class="ctrl-btn" id="fontUp" title="Larger text">A+</button>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <h3>Ready for a new paper?</h3>
+      <p id="modalText">I’ll extract all headlines and full articles from the link you pasted and build a fresh mobile reader for you.</p>
+      <div class="modal-actions">
+        <button class="modal-btn secondary" id="modalCancel">Cancel</button>
+        <button class="modal-btn primary" id="modalConfirm">Share with Grok</button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- SETTINGS -->
-<div class="modal hide" id="mSettings">
-  <div class="sheet">
-    <h2>Setup</h2>
-    <p class="note">The reader proxy fetches pages server-side (a phone browser can't fetch other sites directly). Jina AI's free reader needs no key. All shortcuts and settings stay on this phone.</p>
-    <div class="field">
-      <label>Reader proxy</label>
-      <select id="setProxy">
-        <option value="jina">Jina AI Reader — free, no key (recommended)</option>
-        <option value="jinakey">Jina AI Reader — with key (faster, higher limits)</option>
-        <option value="direct">Direct fetch (only CORS-open sites)</option>
-      </select>
-    </div>
-    <div class="field" id="fldJinaKey">
-      <label>Jina API key (optional, free at jina.ai)</label>
-      <input type="password" id="setJinaKey" placeholder="jina_…">
-    </div>
-    <button class="btn block" id="btnSaveSet">Save</button>
-    <button class="btn ghost block" id="btnCloseSet" style="margin-top:8px">Close</button>
-  </div>
-</div>
+  <script>
+    // ========== ARTICLES DATA ==========
+    const articles = [
+      {
+        id: 1,
+        category: "Delhi",
+        time: "10:03 AM",
+        author: "ANI",
+        title: "All Delhi Metro stations reopen after CJP calls off Jantar Mantar protest",
+        summary: "DMRC says both entry and exit gates at all stations are now open for passengers after the youth-led agitation ended.",
+        body: `<p>All stations of the Delhi Metro network were opened for passenger services on Sunday after the Cockroach Janata Party (CJP) called off its agitation at Jantar Mantar, ending days of security restrictions and staggered closures at 18 key central Delhi stations.</p>
+<p>The Delhi Metro Rail Corporation (DMRC) said that both entry and exit gates at all stations are now open for passengers.</p>
+<blockquote>“Service Update: All stations of the Delhi Metro network are open (both entry and exit) for passenger services,” DMRC said in a post on X.</blockquote>
+<p>The decision follows days of security restrictions and staggered closures at key stations, including Rajiv Chowk, Central Secretariat, Mandi House, ITO and New Delhi, causing major disruptions for commuters during peak hours.</p>
+<p>The closed stations included Lok Kalyan Marg, Rajiv Chowk, Patel Chowk, Ramakrishna Ashram Marg, Barakhambha Road, Supreme Court, Seva Teerth, Janpath, Mandi House, Central Secretariat, ITO, Delhi Gate, Indraprastha, Khan Market, Jor Bagh, Shivaji Stadium, Jhandewalan and New Delhi.</p>
+<p>The restrictions were lifted after security personnel and law enforcement agencies cleared barriers at major central Delhi stations following an assessment of the situation after the official end of the sit-in at Jantar Mantar.</p>
+<p>Meanwhile, internet services have also been restored at the Jantar Mantar protest site and neighbouring areas of Central Delhi after the CJP announced the withdrawal of its agitation.</p>
+<p>The administration had imposed mobile internet restrictions in the area for several days as the youth-led protest over NEET-UG examination irregularities grew in numbers.</p>
+<p>The CJP said it withdrew the agitation in “good faith” after receiving assurances from the government on its demands.</p>
+<p>“Cockroach Janta Party declares that we withdraw the agitation in good faith, with the understanding that the agreed-upon terms will be executed within the agreed-upon timelines,” CJP Chief Spokesperson Saurav Das said.</p>
+<p>The development came after Dharmendra Pradhan resigned from the Union Education Minister’s post following over a month-long protest, including the CJP’s agitation at Jantar Mantar and a 26-day hunger strike by activist Sonam Wangchuk.</p>
+<p>The CJP said the Central government had agreed to provide suitable compensation to the families of NEET aspirants who died by suicide and assured the withdrawal of FIRs lodged against protesters across the country.</p>
+<p>Union Minister JP Nadda said the government had considered and accepted the demands raised during talks on reforms in the examination system and other issues related to the protests.</p>
+<p>Following Pradhan’s resignation, newly appointed Union Education Minister Prahlad Joshi said he would fulfil the responsibility with “complete humility and responsibility.”</p>`
+      },
+      {
+        id: 2,
+        category: "India",
+        time: "11:15 AM",
+        author: "ANI",
+        title: "‘This is just the beginning’: CJP’s Abhijeet Dipke after 37-day protest over NEET-UG paper leak",
+        summary: "CJP founder thanks supporters, says criticism made the movement stronger; vows to continue campaign for examination reforms.",
+        body: `<p>Cockroach Janata Party (CJP) founder Abhijeet Dipke on Sunday thanked supporters across the country for backing its 37-day agitation, saying their support and trust made the “huge victory of the youth” possible.</p>
+<p>In a video shared on X, Dipke said the prolonged agitation had been difficult for the entire team and thanked those who stood by the movement despite criticism and doubts.</p>
+<blockquote>“It feels really good... finally, at last, I have been able to sleep peacefully and wake up in my bedroom without thinking about what to do next, or what will happen by this evening or not. There is no panic,” he said.</blockquote>
+<p>“What we went through in the last 37 days was really, really difficult. It was not easy—not just for me, but for all of our team,” Dipke added.</p>
+<p>He expressed gratitude to supporters of the CJP across India, saying, “All the people who supported us, who showed trust in us, and who loved us when everybody was doubting us—I really want to thank you all from the bottom of my heart. Without your support, this wouldn't have been possible.”</p>
+<p>Dipke also apologised for not being able to meet everyone who remained at Jantar Mantar after the protest was called off, citing his health condition.</p>
+<p>“I also really want to apologise; I couldn't meet all the people who were still waiting at Jantar Mantar yesterday to say thank you to them because, as you know, I have typhoid and I had developed a very high fever—my temperature had reached 101. That is why I had to come home,” he said.</p>
+<p>Thanking those who stayed at the protest site for 37 days, Dipke said their efforts were significant for the country.</p>
+<p>“I really, really, really appreciate what you did for this country. And I really, really love you all. Without you guys, we wouldn't have been able to achieve this. Salute to you all,” he said.</p>
+<p>The CJP founder also thanked those who had criticised or questioned the movement, saying the criticism helped it improve.</p>
+<blockquote>“If you hadn't criticised us, if you hadn't questioned us, we perhaps wouldn't have had the chance to improve ourselves. It's because of your criticism, it's because of your legitimate questions, that we were able to improve ourselves, and I think that's why we were able to deliver as well,” Dipke said.</blockquote>
+<p>He further said the outfit would continue its journey, asserting that the end of the agitation was only the beginning.</p>
+<p>“As I said, and as I have been saying since day one: this is just a beginning. The Cockroach Janta Party has a long way to go, and for sure, we will go a long way. This is just a beginning,” he said.</p>
+<p>The 37-day-long agitation culminated with the resignation of Union Education Minister Dharmendra Pradhan on Saturday amid nationwide protests over the NEET-UG 2026 paper leak. The CJP subsequently withdrew its protest from Jantar Mantar after receiving assurances from the government on its demands.</p>
+<p>Union Ministers J P Nadda and Jitendra Singh held talks with the CJP and accepted its demand for suitable compensation to the families of NEET aspirants who died by suicide and assured the withdrawal of FIRs lodged against protesters across the country.</p>
+<p>The government also agreed to examine the outfit's five-point charter on examination reforms, with the next round of talks scheduled after four weeks.</p>`
+      },
+      {
+        id: 3,
+        category: "India",
+        time: "12:29 PM",
+        author: "PTI",
+        title: "Prahlad Joshi takes charge as Education Minister",
+        summary: "Joshi was appointed Education Minister after Dharmendra Pradhan resigned from the post on Saturday.",
+        body: `<p>Newly appointed Union Education Minister Prahlad Joshi has taken charge, officials said on Sunday.</p>
+<p>Joshi was appointed Education Minister after Dharmendra Pradhan resigned from the post on Saturday.</p>
+<p>Joshi has been given additional charge of the Education Ministry besides his role as the Consumer Affairs Minister.</p>
+<p>Pradhan resigned from his post on Saturday following the Cockroach Janta Party-led student protests across the country, demanding his ouster over the NEET paper leak controversy.</p>
+<p>In his resignation letter, Pradhan said it was not a matter of “individual prestige” for him, and that he was disturbed to see the series of events that unfolded over the last 10 days.</p>`
+      },
+      {
+        id: 4,
+        category: "Top Headlines",
+        time: "11:20 AM",
+        author: "Aditi Tandon",
+        title: "Slipping narrative, swelling protests did Pradhan in",
+        summary: "NEET protest pressure forces BJP's first major ministerial sacrifice amid public agitation.",
+        body: `<p>It’s not routine for a member of the BJP’s largely silent Margdarshak Mandal to speak, let alone publicly. So when Murli Manohar Joshi, 92, took to X on Thursday to flag the imperatives of engagement with the Jantar Mantar protesters or risk alienating them from the goal of Viksit Bharat, his remarks were anything but routine.</p>
+<p>They were seen as well-timed and calibrated. Sections within the Sangh Parivar even believed Joshi’s X post had Prime Minister Narendra Modi’s backing and that heads might finally roll.</p>
+<p>And today, a head did roll. Thirty-six days after the Cockroach Janta Party (CJP)-led movement persisted with its demand for the resignation of Education Minister Dharmendra Pradhan over the 2026 NEET-UG paper leak, he put in his papers, citing the need to keep “anti-India forces at bay” and protect the future of India’s youth.</p>
+<p>The development was seen in political circles as PM Modi’s capitulation in the face of growing protests. The reason: this is the first time in eight years that an NDA minister has stepped down amid sustained public pressure. The last and only NDA minister to resign was MJ Akbar in 2018. But Akbar was a Minister of State and a political lightweight, unlike Pradhan, a Cabinet minister and a key member of Home Minister Amit Shah’s election strategy and management team.</p>
+<p>Pradhan was credited with the BJP’s hat-trick in Haryana in 2024 and with ending the Naveen Patnaik-led BJD’s 24-year rule in Odisha the same year. He later oversaw the BJP’s victory in the 2025 Bihar Assembly elections, having earlier steered the party to wins in Uttar Pradesh (2022), Uttarakhand (2017) and Jharkhand (2014).</p>
+<p>His value to the party was clearly too significant to ignore. That explains the BJP’s abiding insistence on retaining him until, of course, things changed on July 20, when the ruling party as well as the security establishment were jolted by the scale of the CJP’s “Chalo Sansad” call.</p>
+<p>That was the day the government first woke up to the movement’s potential to spread beyond Delhi and beyond the call for Pradhan’s ouster. Farmer leaders had already begun expressing solidarity, and support was growing by the day. The BJP’s internal assessment was that while the year-long farmers’ agitation was mostly powered by Punjab, the CJP-led protests were drawing participation from across the country.</p>
+<p>The swelling protests also signalled a loss of grip on the political narrative — a reason why PM Modi resorted to two rare selfie videos on Instagram, where Gen Z had mobilised around the CJP movement. NDA allies also nudged the government to act with even elements within the right wing flagging on social media that the government’s response was already late, and that time, which was of essence in the agitation at hand, had already been lost.</p>
+<p>A growing protest, a slipping narrative and the imperative of running a strained Parliament with the focus on legislative agenda, including the new anti-paper leak law listed on Monday, together formed the mix of factors that eventually led to Pradhan’s ouster today.</p>
+<p>Within the BJP, too, there was growing unease, with some leaders harking back to delayed response during the farmers’ agitation, when the farm laws were repealed only after prolonged protests. Sources said the lessons from the farmers’ protests were also weighing on the party leadership as the CJP agitation gathered momentum and spread further.</p>
+<blockquote>“There was a growing realisation that Pradhan’s resignation was key to the collective government goal of dousing the CJP protests before anti-national forces infiltrated the agitation for political ends and to derail the government’s reform agenda. The protest script does bear uncanny similarities to what India’s neighbourhood saw in recent times in the shape of regime changes. Our government deemed it fit to retreat so that democracy could advance. The fact that the CJP has ended its protest shows that, ultimately, Indian democracy won,” a BJP insider said.</blockquote>
+<p>Sources said Rahul Gandhi’s continued “fanning of CJP protests” and the Congress’ insistence on not letting Parliament run until Pradhan was removed also weighed on the government’s mind before the final decision.</p>
+<p>The broad assessment in the party however is that the ultimate aim behind letting Pradhan go was to “thwart anti-India forces from exploiting the CJP protests to disturb peace amid intel on potential security risks.”</p>
+<p>All that said, PM Modi ultimately appears to have buckled in order to pacify the youth, whom he has always described as one of the four pillars of the goal of Viksit Bharat by 2047, alongside farmers, women and the poor.</p>`
+      },
+      {
+        id: 5,
+        category: "India",
+        time: "01:29 AM",
+        author: "Surya S Pillai",
+        title: "Melody toffees, roses, tears: Jantar Mantar erupts",
+        summary: "Gen Z protesters broke into impromptu dances on popular Bollywood songs as soon as the announcement of Dharmendra Pradhan's resignation was made.",
+        body: `<p>Gen Z protesters broke into impromptu dances on popular Bollywood songs as soon as the announcement of Dharmendra Pradhan's resignation was made. Anyone visiting the site was welcomed with Melody toffees, the confectionery that made headlines after the portmanteau “Melodi”, reflecting Prime Minister Narendra Modi’s camaraderie with Italian Prime Minister Giorgia Meloni, became a viral trend, particularly after Modi gifted a packet of Melody to his Italian counterpart.</p>
+<blockquote>“We were harassed, beaten by the Delhi Police, called ‘anti-national’, and shamed by the godi media. But this day is the culmination of our struggle and determination. We were sure we would not budge until that man resigned,” said Riya Kapoor, a medical student.</blockquote>
+<p>Young men and women hugged one another, wiped away tears and once again proudly displayed their innovative and cheeky placards. They will remember the friendships forged at the site, the food shared and, of course, their collective resistance to alleged police brutality.</p>
+<p>A tight ring of police security and deployment of RAF personnel around the historic protest site did not deter the students from celebrating their win. Some of them also offered Melody toffees and roses to the security personnel who a few week ago brutally beat them up.</p>
+<blockquote>"My happiness knows no bounds. I came here from Lucknow, slept at metro stations and the protest site. Today, I feel the sacrifice paid off. I am proud to bring an incompetent government to its knees," Mayank Sharma said.</blockquote>
+<p>Gen Z were back with their selfie sticks, taking photographs of themselves and their friends.</p>
+<p>"I will post the pictures when I get back home. I will flash a proud smile when I will meet my parents," a protester said.</p>
+<p>So is the crowd going back?</p>
+<p>"Some of them are going back, some are yet to decide on their next step. But today is the day to celebrate. Finally, I will get a good night's sleep," Manish said.</p>`
+      },
+      {
+        id: 6,
+        category: "India",
+        time: "12:22 PM",
+        author: "PTI",
+        title: "CJP protest: Rahul writes to Amit Shah, demands accountability for ‘barbaric’ assault on students",
+        summary: "Leader of Opposition demands answers over use of lethal force, including pellet guns, against peacefully protesting students.",
+        body: `<p>Leader of Opposition in the Lok Sabha Rahul Gandhi has written to Home Minister Amit Shah, demanding accountability for the “barbaric assault” on peacefully protesting students here and asking whether he approved the use of “lethal force”, including pellet guns, against the youth.</p>
+<p>In his letter to Shah, Gandhi said peaceful protest is crucial to any democracy and it is the government’s responsibility to protect protesters and resolve their grievances through dialogue.</p>
+<blockquote>“Such brutal violence destroys every norm, and has outraged the country. Youth and students, the future of our country, are demanding answers and accountability. Their voice will be heard,” the former Congress chief said.</blockquote>
+<p>“I write to demand accountability for the barbaric assault on students who were peacefully protesting in Delhi on July 20, 2026. Our students were demanding a fair and accountable education system. Instead of being heard, security forces assaulted them with indiscriminate force, including lethal weapons and tear gas,” Gandhi said in his letter dated July 25.</p>
+<p>“Hundreds have suffered serious injuries and women students have been assaulted by policemen, including by deliberately targeting their private parts,” he said.</p>
+<p>Gandhi said most shocking has been the use of lethal pellet guns.</p>
+<blockquote>“Reports in the media and social media clearly show people who have suffered grave injuries including a journalist. I met 19-year old student Sahil Lochab, who is now in severe pain and is likely to lose an eye because he was shot with pellet guns,” he said.</blockquote>
+<p>“Security forces deployed in Delhi answer ultimately to you, so I ask: As Home Minister, did you approve the use of lethal force, including pellet guns against students? If not, who did?” Gandhi said.</p>
+<p>“Are the people in plain clothes seen beating students with lathis police personnel or volunteers? Who authorised their deployment?” Gandhi further questioned.</p>
+<p>“Peaceful protest is crucial to any democracy. It is the government’s responsibility to protect protesters and resolve their grievances through dialogue. Such brutal violence destroys every norm, and has outraged the country.”</p>
+<p>The protests were spearheaded by the CJP, a platform launched by Abhijeet Dipke as a satirical online campaign in May before it evolved into a nationwide youth movement centred on demands for accountability over the NEET paper leak.</p>
+<p>The agitation began at Jantar Mantar on June 20 but acquired national momentum after activist Sonam Wangchuk joined it on June 28 and undertook an indefinite fast with six AISA activists. Wangchuk ended his fast on Thursday night after the Centre’s outreach to him.</p>`
+      },
+      {
+        id: 7,
+        category: "Jammu & Kashmir",
+        time: "10:52 AM",
+        author: "PTI",
+        title: "Kargil Vijay Diwas: Intent of infiltrators hasn’t changed since 1999, says Rajnath in Dras",
+        summary: "Defence Minister pays tributes on 27th Kargil Vijay Diwas; says Indian Army is fully prepared for any challenge.",
+        body: `<p>Defence Minister Rajnath Singh has said the “intent of infiltrators” hasn’t changed since the 1999 Kargil conflict and the Indian Army is “fully prepared” for any challenge.</p>
+<p>In his address to Army personnel at a Shaurya Bhoj hosted in Dras on Saturday, he also said the government has laid special emphasis on modernisation of the armed forces, and the endeavour is that the military gets the latest equipment and the best of the training.</p>
+<p>Singh arrived in Dras on Saturday evening to attend Shaurya Sandhya, an event held at the Kargil War Memorial here as part of a two-day programme to mark the anniversary of Kargil Vijay Diwas.</p>
+<p>Kargil Vijay Diwas commemorates the culmination of Operation Vijay on July 26, 1999. The operation was started by the Army to regain Indian territories in Kargil district captured by Pakistani troops.</p>
+<blockquote>“We have to remember that even today challenges have not reduced; the intent of infiltrators hasn’t changed, and even today it adopts tools like a proxy war or infiltration,” he said in a veiled reference to Pakistan.</blockquote>
+<p>“I am fully assured that our Army is fully prepared for any such challenges,” Singh said.</p>
+<p>The defence minister said, this is “our century, the coming time is ours,” and given the emphasis on Aatmanirbharta, “I am assured that Indian armed forces will become the best in the world.”</p>
+<p>In his address, he also saluted the armed forces and the valour of the soldiers.</p>
+<blockquote>“Today we are breathing free and living with our heads held high, as our soldiers in Kargil, despite plummeting mercury and dipping oxygen levels, have not lowered their guard,” Singh said.</blockquote>
+<p>Singh said the pride he was feeling in Dras at this occasion cannot be expressed in words.</p>
+<p>He said he was confident that till Indian soldiers possess the invisible inner strength, and a sense of nationalistic sentiment, “no force of the world will dare to cast an evil eye on India.”</p>
+<p>“In the last few years, I have had the opportunity to see closely many of the traditions of the Army, and one that touches the heart the most is Bada Khana,” the minister said.</p>
+<p>This is so because it is the only occasion when a jawan and an officer sit together and have the same meal, depicting an excellent sense of teamwork, he said.</p>
+<blockquote>“Your ability to rise above the limitations found in society is your true strength. And this strength alone enables us to win wars like the Kargil one,” Singh said.</blockquote>`
+      },
+      {
+        id: 8,
+        category: "India",
+        time: "01:38 AM",
+        author: "Manikant Mishra",
+        title: "Women in the tent: CJP’s female members who stood their ground",
+        summary: "For 36 days, the protest tents at Jantar Mantar became classrooms, workplaces and a second home for many women who sustained the movement.",
+        body: `<p>For 36 days, the protest tents at Jantar Mantar became more than a site of political resistance. They served as classrooms, workplaces, kitchens, meeting rooms and, for many women, a second home. While public attention often focused on speeches, marches and clashes with the police, women within the camp quietly sustained much of the movement’s daily operations, decision-making and morale.</p>
+<p>Their roles extended far beyond participation. They coordinated volunteers, helped draft policy documents, managed logistics, comforted fellow protesters and remained at the site through long days and uncertain nights. Their accounts reveal a movement sustained not only by public demonstrations but also by emotional resilience, collective responsibility and a determination to be treated as equals.</p>
+<p>Among them was a young volunteer who had only recently completed her Class 12 examinations. What began as volunteering soon evolved into a position within the CJP’s core volunteer team.</p>
+<blockquote>“We know what is right and wrong, and who to stand with,” she said. “The whole idea behind the CJP protest was to ensure accountability, and I believed in that. That is why I came.”</blockquote>
+<p>She said her commitment deepened after the July 20 ‘Sansad Chalo’ march, when police dispersed protesters and the CJP continued demanding accountability despite mounting pressure.</p>
+<p>“What made me stay was seeing the organisation stand by its demands even after everything that happened. It is rare to find people who continue supporting you when so much pressure builds around them. The presence of women leaders in the camp also gave us a sense of comfort and belonging.”</p>
+<p>While the protest camp fostered solidarity, women also encountered subtle challenges. Prachi and Megha recalled that people, including fellow protesters and even members of the organisation, often tried to provide them with additional care simply because they were women.</p>
+<blockquote>“I know their intentions were good, but sometimes it made me feel as though I was being treated differently. I am no less capable than anyone else,” Megha admitted.</blockquote>
+<p>The two stressed that responsibilities within the camp were shared collectively. “It was our collective effort that kept the protest running,” Megha said.</p>
+<p>For many participants, support from home made it possible to remain at the protest site. Rasika said her family never objected to her joining the movement. “They always understood why it was happening. They believed the demand was justified, so they never stopped me.”</p>
+<p>Garima, another student participating in the protest, said the experience itself had become an unforgettable memory. “Being here is something I will never forget. This protest has taught the nation one important lesson: accountability.”</p>
+<p>Asked what they would say to young women hesitant about joining public movements, Megha, Prachi and Rasika responded in unison: “Everyone should participate, especially girls.”</p>
+<p>Women also occupied key leadership positions within the CJP. Ratna, one of the organisation’s spokespersons and a lawyer, said women were indispensable to the movement’s functioning.</p>
+<blockquote>“The participation of women was essential. No democratic movement can truly function without the participation of the half of the population that women represent.”</blockquote>
+<p>Vaishnavi Gaur, a policy expert and CJP spokesperson, said women regularly contributed to internal strategy meetings where key organisational decisions were discussed. “We held daily internal meetings in which women actively contributed to discussions, and those suggestions were always taken into account.”</p>
+<p>Looking back, CJP spokesperson and core leadership member Aafreen Nawaz said the movement’s legacy should recognise not only its demands but also the women who sustained it.</p>
+<blockquote>“History should remember us for what we stood for, and for what every woman who stepped into Jantar Mantar stood for. That must be remembered.”</blockquote>`
+      },
+      {
+        id: 9,
+        category: "Diaspora",
+        time: "09:48 AM",
+        author: "Mohit Khanna",
+        title: "‘He spoke briefly, then fired’: Punjabi woman shot dead in targeted Toronto attack",
+        summary: "26-year-old Navneet Kaur killed in Etobicoke; 37-year-old suspect from Brampton charged with first-degree murder.",
+        body: `<p>A 26-year-old woman of Punjabi origin was shot dead in Canada's Toronto by a 37-year-old man of Punjabi descent.</p>
+<p>The Toronto Police have identified a Brampton-based man who has been charged with first-degree murder after a woman was fatally shot during what the police term as a “targeted attack” in Etobicoke early Friday morning.</p>
+<p>The victim has been identified as Navneet Kaur (26) of Toronto. The suspect, Sharnjeet Singh (37), has also been charged with failing to comply with an undertaking.</p>
+<p>The relationship between the accused and the victim is not known yet.</p>
+<p>In a press statement, Toronto Police allege the victim and the suspect were engaged in a "brief interaction” when the suspect shot the woman. Emergency responders rushed to the scene after receiving reports of the shooting and administered life-saving measures. However, the victim was pronounced dead at the scene.</p>
+<p>According to the police, the suspect fled the scene before officers arrived but was later arrested following a search operation by officers of the Ontario Provincial Police.</p>
+<p>Sharnjeet was scheduled to appear before the Ontario Court of Justice in Toronto on Saturday morning.</p>
+<p>A witness, who was having coffee nearby, told he saw a man approach the woman and speak with her briefly before opening fire.</p>
+<blockquote>“He spoke briefly, then fired.”</blockquote>
+<p>The residents have raised safety concerns following the incident. Toronto Police are seeking additional information in this matter.</p>`
+      },
+      {
+        id: 10,
+        category: "World",
+        time: "10:45 AM",
+        author: "ANI",
+        title: "‘Not been an easy evening’: Trump jokes about awards honouring critical coverage of his administration",
+        summary: "US President opens White House Correspondents’ Dinner with a jab at journalism awards that recognised reporting critical of his team.",
+        body: `<p>US President Donald Trump on Friday (local time) started his speech at the rescheduled White House Correspondents’ Association (WHCA) Dinner by joking that it had “not been an easy evening” for him, referring to journalism awards presented for coverage critical of his administration.</p>
+<blockquote>“This has not been an easy evening -- all these awards. Do I have a say on those awards?” the US President said.</blockquote>
+<p>According to CNN, several journalists were honoured for their reporting on the Trump Administration, some of whom were critical of the nature of his administration in their coverage.</p>
+<p>CNN reported that its journalist Kaitlan Collins was recognised for her coverage of the Oval Office meeting between Trump and Ukrainian President Volodymyr Zelensky, with judges praising her reporting for its “depth of knowledge, access and context” during a meeting that “unravelled before the world’s eyes.”</p>
+<p>Meanwhile, The Associated Press reporters Aamer Madhani and Zeke Miller were honoured in the print category for their reporting on the dismissal of National Security Council staff whose views were considered not aligned with the President’s agenda.</p>
+<p>The evening also saw several Wall Street Journal reporters recognised for their reporting on an alleged letter that Trump reportedly wrote to Jeffrey Epstein for his 50th birthday. The report later became the subject of a lawsuit filed by Trump against the Journal’s parent company.</p>
+<p>As the award-winning report was described during the ceremony, Trump was seen smirking and repeatedly shrugging his shoulders before shaking hands with the journalists involved.</p>
+<p>The Correspondents’ Dinner was rescheduled after the original April event was abruptly called off following a major security incident at the Washington Hilton.</p>
+<p>A man identified as Cole Allen allegedly ran through a security checkpoint carrying loaded firearms and knives before being subdued by US Secret Service agents outside the ballroom. Authorities said Allen allegedly struck an officer before being restrained, while Trump and senior administration officials were rushed to safety after gunfire was heard outside the venue.</p>
+<p>Allen later pleaded not guilty to four federal charges, including attempting to assassinate a president and assaulting a law enforcement officer. He remains in custody.</p>`
+      },
+      {
+        id: 11,
+        category: "World",
+        time: "11:05 AM",
+        author: "AP",
+        title: "1 killed, 16 injured as van slams into crowd at Berlin’s Pride event",
+        summary: "Police identify suspect with ties to Islamic extremists; iconic pride celebrations called off after the attack in Tiergarten park.",
+        body: `<p>A van slammed into people gathered for Berlin’s famed LGBTQ+ event on Saturday night, killing one person, injuring at least 16 others and prompting police to call off the celebrations and a concert in the German capital hours after they had begun.</p>
+<p>Berlin police said they have identified a suspect who has not been arrested and he has ties to Islamic extremists in the German capital.</p>
+<blockquote>“The suspect is known to police. He is known to us as a member of Islamic circles here in Berlin, and our search for this person is proceeding at full speed,” said police spokesman Florian Nath.</blockquote>
+<p>Earlier, police said some of the victims had life-threatening injuries. In a post on X, police called on everyone to leave the site of the event immediately as ambulances and firefighters attended to the victims.</p>
+<p>According to police, a white van had driven into the Tiergarten park around 10 pm, which is next to the route that the pride march had passed along earlier, and hit several people before colliding with a tree.</p>
+<p>Overall, more than 2,200 police officers have been on duty in Berlin since Saturday morning to protect the pride parade and other LGBTQ+ events in the city.</p>
+<p>Berlin Mayor Kai Wegner expressed shock, saying that “following a peaceful and vibrant pride parade, the rally for a tolerant and peaceful Berlin was attacked in the most brutal manner.”</p>
+<blockquote>“This is an attack on our free and cosmopolitan society,” Wegner said.</blockquote>
+<p>Hundreds of thousands of people had come to Berlin on Saturday to celebrate at Berlin’s pride parade, known in Germany as Christopher Street Day. It’s one of Europe’s largest LGBTQ+ celebrations.</p>
+<p>The pride event in front of the city’s Brandenburg Gate, near Tiergarten, was called off around 10:15 pm and a band’s performance on stage was interrupted. People were urged to go home and to avoid taking the route through the park.</p>`
+      },
+      {
+        id: 12,
+        category: "Delhi",
+        time: "12:51 PM",
+        author: "PTI",
+        title: "Noida boy, 6, falls into water-filled pit while playing, drowns",
+        summary: "Police say contractor responsible for the boring work arrested after family files complaint.",
+        body: `<p>A six-year-old boy drowned after accidentally falling into a water-filled pit dug for boring work inside a residential colony in Greater Noida, police said on Sunday.</p>
+<p>The incident took place on Saturday evening in Kaladham Colony when the child was playing with other children near the pit at around 7 pm, police said.</p>
+<p>According to police, the boy accidentally fell into the water-filled pit and was pulled out by family members, who rushed him to a hospital. Doctors declared him dead on arrival.</p>
+<p>After completing the inquest proceedings, police sent the body for postmortem examination.</p>
+<p>Based on a complaint lodged by the victim’s family, a case has been registered and further legal proceedings have been initiated, police said.</p>
+<p>The contractor responsible for the boring work was arrested on Sunday in connection with the incident, they added.</p>`
+      }
+    ];
 
-<script>
-'use strict';
-function $(id){ return document.getElementById(id); }
-function esc(s){ return (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function toast(m,ms){ var t=document.createElement('div'); t.className='toast'; t.textContent=m;
-  document.body.appendChild(t); setTimeout(function(){t.remove();}, ms||2600); }
-function show(id){ ['vHome','vList','vLoad','reader'].forEach(function(v){$(v).classList.add('hide');});
-  $(id).classList.remove('hide'); window.scrollTo(0,0); }
+    // ========== APP LOGIC ==========
+    let currentFontSize = 17;
+    const homeView = document.getElementById('homeView');
+    const articleView = document.getElementById('articleView');
+    const articleList = document.getElementById('articleList');
+    const readerControls = document.getElementById('readerControls');
+    const toast = document.getElementById('toast');
+    const modal = document.getElementById('modal');
 
-var CFG = {
-  proxy: localStorage.getItem('lk_proxy') || 'jina',
-  jinaKey: localStorage.getItem('lk_jinakey') || ''
-};
-var READER = Object.assign({size:19, lh:1.72, font:'serif', just:true, theme:'paper'},
-  JSON.parse(localStorage.getItem('lk_reader') || '{}'));
-function saveReader(){ localStorage.setItem('lk_reader', JSON.stringify(READER)); }
+    // Render article cards
+    function renderList() {
+      articleList.innerHTML = articles.map(a => `
+        <article class="article-card" data-id="${a.id}" role="button" tabindex="0">
+          <div class="card-meta">
+            <span class="category">${a.category}</span>
+            <span class="card-time">${a.time}</span>
+          </div>
+          <h2 class="card-title">${a.title}</h2>
+          <p class="card-summary">${a.summary}</p>
+        </article>
+      `).join('');
 
-/* ---------- IndexedDB: saved shortcuts + cached article text ---------- */
-var DB=null;
-function openDB(){ return new Promise(function(res,rej){
-  var r=indexedDB.open('linkreader',1);
-  r.onupgradeneeded=function(e){ e.target.result.createObjectStore('links',{keyPath:'url'}); };
-  r.onsuccess=function(e){ DB=e.target.result; res(); };
-  r.onerror=function(){ rej(r.error); };
-}); }
-function dbPut(o){ return new Promise(function(res,rej){ var tx=DB.transaction('links','readwrite');
-  tx.objectStore('links').put(o); tx.oncomplete=res; tx.onerror=function(){rej(tx.error);}; }); }
-function dbGet(url){ return new Promise(function(res){ var tx=DB.transaction('links','readonly');
-  var rq=tx.objectStore('links').get(url); rq.onsuccess=function(){res(rq.result||null);}; rq.onerror=function(){res(null);}; }); }
-function dbAll(){ return new Promise(function(res,rej){ var out=[]; var tx=DB.transaction('links','readonly');
-  tx.objectStore('links').openCursor().onsuccess=function(e){ var c=e.target.result;
-    if(c){out.push(c.value); c.continue();} else res(out); }; tx.onerror=function(){rej(tx.error);}; }); }
-function dbDel(url){ return new Promise(function(res){ var tx=DB.transaction('links','readwrite');
-  tx.objectStore('links').delete(url); tx.oncomplete=res; }); }
-
-/* ---------- url helpers ---------- */
-function normUrl(u){ u=(u||'').trim(); if(!u) return '';
-  if(!/^https?:\/\//i.test(u)) u='https://'+u; return u; }
-function hostOf(u){ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return u; } }
-
-/* ---------- fetch a link → clean article ---------- */
-function fetchViaJina(url, withKey){
-  var headers={'x-respond-with':'markdown'};
-  if(withKey && CFG.jinaKey) headers['Authorization']='Bearer '+CFG.jinaKey;
-  return fetch('https://r.jina.ai/'+url, {headers:headers}).then(function(r){
-    if(!r.ok) throw new Error('Proxy '+r.status);
-    return r.text();
-  }).then(function(md){ return parseJina(md, url); });
-}
-function fetchDirect(url){
-  return fetch(url).then(function(r){
-    if(!r.ok) throw new Error('Fetch '+r.status);
-    return r.text();
-  }).then(function(html){ return parseHtml(html, url); });
-}
-function fetchArticle(url){
-  if(CFG.proxy==='direct') return fetchDirect(url);
-  return fetchViaJina(url, CFG.proxy==='jinakey');
-}
-
-/* Fetch an index/section/home page and return the list of article links on it.
-   Jina's "links summary" gives us every link with its anchor text. */
-function fetchIndex(url){
-  var headers={'x-with-links-summary':'true'};
-  if(CFG.proxy==='jinakey' && CFG.jinaKey) headers['Authorization']='Bearer '+CFG.jinaKey;
-  return fetch('https://r.jina.ai/'+url, {headers:headers}).then(function(r){
-    if(!r.ok) throw new Error('Proxy '+r.status);
-    return r.text();
-  }).then(function(md){ return parseIndex(md, url); });
-}
-/* Jina appends a "Links/Buttons" section: "- [anchor text](https://…)" lines.
-   Keep links that look like real articles on the same site. */
-function parseIndex(md, url){
-  var host=hostOf(url);
-  var seen={}, items=[];
-  var re=/\[([^\]]{12,140})\]\((https?:\/\/[^)\s]+)\)/g, m;
-  while((m=re.exec(md))){
-    var text=m[1].trim(), link=m[2].trim();
-    var lh=hostOf(link);
-    if(lh!==host && lh.indexOf(host)===-1 && host.indexOf(lh)===-1) continue; // same-site only
-    if(seen[link]) continue;
-    if(!looksLikeArticle(link, text)) continue;
-    seen[link]=1;
-    items.push({title:text, url:link});
-  }
-  return { host:host, src:url, items:items };
-}
-function looksLikeArticle(link, text){
-  var l=link.toLowerCase();
-  // reject obvious non-articles
-  if(/\.(jpg|jpeg|png|gif|svg|pdf|css|js|xml)(\?|$)/.test(l)) return false;
-  if(/(facebook|twitter|x|instagram|youtube|whatsapp|linkedin|t)\.(com|co|me)/.test(l)) return false;
-  if(/\/(tag|tags|author|about|contact|privacy|advertise|subscribe|epaper|login|register|category)\b/.test(l)) return false;
-  if(/#|mailto:|javascript:/.test(l)) return false;
-  // article URLs usually have a longish slug or a numeric id
-  var path=l.split('#')[0].split('?')[0];
-  var slug=path.replace(/\/$/,'').split('/').pop()||'';
-  var deep=(path.match(/\//g)||[]).length>=4;
-  var goodSlug=slug.length>=12 && /[a-z].*-.*[a-z]/.test(slug);
-  var hasId=/\d{5,}/.test(path);
-  if(!(goodSlug||hasId||deep)) return false;
-  if(text.split(/\s+/).length<3) return false; // headlines have several words
-  return true;
-}
-function isIndexUrl(url){
-  try{
-    var u=new URL(url);
-    var path=u.pathname.replace(/\/+$/,'');
-    if(path==='' ) return true;                       // home page
-    var segs=path.split('/').filter(Boolean);
-    var last=segs[segs.length-1]||'';
-    // a section like /nation or /punjab is short & slug-less; an article has a long slug
-    if(segs.length<=2 && !/\d{5,}/.test(path) && !/[a-z]-[a-z].*-[a-z]/.test(last)) return true;
-    return false;
-  }catch(e){ return false; }
-}
-
-/* Jina returns markdown with a Title:/URL Source: header, then content */
-function parseJina(md, url){
-  var title='', src=url, body=md;
-  var mt=md.match(/^Title:\s*(.+)$/m); if(mt) title=mt[1].trim();
-  var ms=md.match(/^URL Source:\s*(.+)$/m); if(ms) src=ms[1].trim();
-  var idx=md.indexOf('Markdown Content:');
-  if(idx>-1) body=md.slice(idx+'Markdown Content:'.length);
-  return { title: title || hostOf(url), src: src, host: hostOf(url), html: mdToHtml(body) };
-}
-/* minimal, safe markdown → html */
-function mdToHtml(md){
-  var lines=(md||'').replace(/\r/g,'').split('\n');
-  var out=[], para=[];
-  function inline(t){
-    t=esc(t);
-    t=t.replace(/!\[([^\]]*)\]\(([^)\s]+)[^)]*\)/g,function(_,a,u){ return /^https?:\/\//.test(u)?'<img src="'+u+'" alt="'+a+'">':''; });
-    t=t.replace(/\[([^\]]+)\]\(([^)\s]+)[^)]*\)/g,function(_,a,u){ return /^https?:\/\//.test(u)?'<a href="'+u+'" target="_blank" rel="noopener">'+a+'</a>':a; });
-    t=t.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/(^|[^*])\*([^*]+)\*/g,'$1<i>$2</i>');
-    return t;
-  }
-  function flush(){ if(para.length){ out.push('<p>'+inline(para.join(' '))+'</p>'); para=[]; } }
-  lines.forEach(function(ln){
-    var h=ln.match(/^(#{1,4})\s+(.+)$/);
-    if(h){ flush(); out.push('<h3>'+inline(h[2])+'</h3>'); return; }
-    if(/^\s*$/.test(ln)){ flush(); return; }
-    if(/^\s*[-*]\s+/.test(ln)){ flush(); out.push('<p>• '+inline(ln.replace(/^\s*[-*]\s+/,''))+'</p>'); return; }
-    para.push(ln.trim());
-  });
-  flush();
-  return out.join('\n');
-}
-/* fallback parser for direct-fetch HTML */
-function parseHtml(html, url){
-  var doc=new DOMParser().parseFromString(html,'text/html');
-  ['script','style','nav','header','footer','aside','form','noscript','iframe'].forEach(function(t){
-    Array.prototype.slice.call(doc.querySelectorAll(t)).forEach(function(n){n.remove();});
-  });
-  var title=((doc.querySelector('h1')&&doc.querySelector('h1').textContent)||doc.title||hostOf(url)).trim();
-  var art=doc.querySelector('article')||doc.querySelector('main')||doc.body;
-  var ps=Array.prototype.slice.call(art.querySelectorAll('p,h2,h3'))
-    .map(function(n){ var t=n.textContent.trim(); if(t.length<25 && n.tagName==='P') return '';
-      return n.tagName[0]==='H'?'<h3>'+esc(t)+'</h3>':'<p>'+esc(t)+'</p>'; })
-    .filter(Boolean);
-  return { title:title, src:url, host:hostOf(url), html: ps.join('\n') || '<p>Could not extract readable text from this page.</p>' };
-}
-
-/* ---------- entry point: decide index-list vs single-article ---------- */
-function handleLink(url, forceFresh){
-  url=normUrl(url);
-  if(!url){ toast('Enter a link first'); return; }
-  if(isIndexUrl(url)){ openIndex(url); }
-  else { openUrl(url, forceFresh); }
-}
-function openIndex(url){
-  $('loadStat').textContent='Reading the section…';
-  $('loadSub').textContent=hostOf(url)+' — finding articles';
-  show('vLoad');
-  fetchIndex(url).then(function(res){
-    if(!res.items.length){
-      toast('No article links found — opening as a single page');
-      openUrl(url, true); return;
+      document.querySelectorAll('.article-card').forEach(card => {
+        card.addEventListener('click', () => openArticle(+card.dataset.id));
+        card.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') openArticle(+card.dataset.id);
+        });
+      });
     }
-    LIST={ host:res.host, src:url, items:res.items };
-    paintList();
-    show('vList');
-  }).catch(function(e){ toast('Could not read that page: '+(e.message||e)); show('vHome'); });
-}
-var LIST=null;
-function paintList(){
-  $('listTitle').firstChild.textContent = LIST.host;
-  $('listSub').textContent = LIST.items.length+' articles found';
-  $('prepBar').classList.remove('hide');
-  var box=$('listWrap'); box.innerHTML='';
-  var hint=document.createElement('div'); hint.className='hintline';
-  hint.style.textAlign='left'; hint.style.margin='0 0 12px';
-  hint.textContent='Tap a headline to read it, or fetch & typeset all below so they open instantly.';
-  box.appendChild(hint);
-  LIST.items.forEach(function(it, i){
-    var el=document.createElement('div'); el.className='tile';
-    el.id='li'+i;
-    el.innerHTML='<div class="fav">'+(it.ready?'✓':'›')+'</div>'+
-      '<div class="meta"><b>'+esc(it.title)+'</b><i>'+esc(it.ready?'ready · tap to read':hostOf(it.url))+'</i></div>';
-    el.onclick=function(){ openUrl(it.url, false); };
-    box.appendChild(el);
-  });
-}
-function markReady(i){
-  var it=LIST.items[i]; it.ready=true;
-  var el=$('li'+i); if(el){ el.querySelector('.fav').textContent='✓';
-    el.querySelector('.meta i').textContent='ready · tap to read'; }
-}
-function plog(html){
-  var b=$('prepLog'); b.insertAdjacentHTML('afterbegin','<div>'+html+'</div>');
-  while(b.children.length>80) b.lastChild.remove();
-}
-/* Stage: fetch every listed article through the proxy, cache each, at a polite pace */
-var PREP={running:false};
-function prepareAll(){
-  if(PREP.running) return;
-  PREP.running=true;
-  $('prepBox').classList.remove('hide');
-  $('btnPrepAll').textContent='Preparing… (tap a ready ✓ anytime)';
-  $('prepLog').innerHTML='';
-  var items=LIST.items, done=0, ok=0, i=0;
-  var GAP = (CFG.proxy==='jinakey' && CFG.jinaKey) ? 600 : 2500; // free tier: go gentle
-  function paint(){
-    $('prepFill').style.width=Math.round(100*done/items.length)+'%';
-    $('prepStat').textContent='Article '+done+' / '+items.length+' · '+ok+' typeset';
-  }
-  function step(){
-    if(!PREP.running){ finishPrep(ok, items.length); return; }
-    if(i>=items.length){ finishPrep(ok, items.length); return; }
-    var idx=i++, it=items[idx];
-    if(it.ready){ done++; ok++; paint(); plog('“'+esc(it.title).slice(0,50)+'…” — already ready'); setTimeout(step, 40); return; }
-    plog('fetching “'+esc(it.title).slice(0,50)+'…”');
-    dbGet(it.url).then(function(cached){
-      if(cached && cached.html){ return cached; }
-      return fetchArticle(it.url).then(function(art){
-        art.url=it.url;
-        return { url:it.url, title:art.title||it.title, host:art.host, src:art.src,
-                 html:art.html, savedAt:Date.now(), lastRead:0, fromSection:LIST.src };
-      }).then(function(rec){ return dbPut(rec).then(function(){ return rec; }); });
-    }).then(function(rec){
-      ok++; markReady(idx);
-      plog('✓ “'+esc(rec.title||it.title).slice(0,50)+'…”');
-    }).catch(function(e){
-      plog('✗ “'+esc(it.title).slice(0,40)+'…” — '+esc(e.message||'failed'));
-    }).then(function(){
-      done++; paint();
-      setTimeout(step, GAP);
+
+    function openArticle(id) {
+      const a = articles.find(x => x.id === id);
+      if (!a) return;
+
+      document.getElementById('artCategory').textContent = a.category;
+      document.getElementById('artTitle').textContent = a.title;
+      document.getElementById('artAuthor').textContent = a.author ? `By ${a.author}` : '';
+      document.getElementById('artTime').textContent = a.time;
+      document.getElementById('artBody').innerHTML = a.body;
+      document.getElementById('artBody').style.fontSize = currentFontSize + 'px';
+
+      homeView.classList.remove('active');
+      articleView.classList.add('active');
+      readerControls.style.display = 'flex';
+      window.scrollTo(0, 0);
+    }
+
+    function goHome() {
+      articleView.classList.remove('active');
+      homeView.classList.add('active');
+      readerControls.style.display = 'none';
+      window.scrollTo(0, 0);
+    }
+
+    // Theme
+    const themeToggle = document.getElementById('themeToggle');
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+      localStorage.setItem('theme', isDark ? 'light' : 'dark');
     });
-  }
-  paint(); step();
-}
-function finishPrep(ok, total){
-  PREP.running=false;
-  $('btnPrepAll').textContent='✓ '+ok+' of '+total+' ready — re-run for the rest';
-  $('prepStat').textContent='Done · '+ok+' typeset and saved on the phone';
-  toast(ok+' articles ready to read offline');
-}
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
 
-/* ---------- open a URL (cached or fresh) ---------- */
-var CURRENT=null;
-function openUrl(url, forceFresh){
-  url=normUrl(url);
-  if(!url){ toast('Enter a link first'); return; }
-  $('loadStat').textContent='Reaching the page…';
-  $('loadSub').textContent=hostOf(url);
-  show('vLoad');
-  var cachedP = forceFresh ? Promise.resolve(null) : dbGet(url);
-  cachedP.then(function(saved){
-    if(saved && saved.html){ saved.url=url; renderArticle(saved, false); return; }
-    $('loadStat').textContent='Cleaning the article…';
-    fetchArticle(url).then(function(art){ art.url=url; renderArticle(art, true); })
-      .catch(function(e){ toast('Could not read that link: '+(e.message||e)); show('vHome'); });
-  });
-}
-function renderArticle(art, isFresh){
-  CURRENT={ url:art.url, title:art.title, host:art.host, src:art.src||art.url, html:art.html, saved:!isFresh };
-  $('rdHead').textContent=art.title;
-  $('rdSrc').textContent=art.host+' · '+(art.src||art.url);
-  $('rdBody').innerHTML=art.html;
-  $('rdOrig').href=art.url||art.src;
-  updateSaveStar();
-  applyReader();
-  show('reader');
-  $('reader').scrollTop=0;
-  if(CURRENT.saved && CURRENT.url) dbGet(CURRENT.url).then(function(s){ if(s){ s.lastRead=Date.now(); dbPut(s); } });
-}
-
-/* ---------- save / unsave shortcut ---------- */
-function updateSaveStar(){ $('btnSave').textContent = CURRENT && CURRENT.saved ? '★' : '☆'; }
-function toggleSave(){
-  if(!CURRENT) return;
-  if(CURRENT.saved){
-    dbDel(CURRENT.url).then(function(){ CURRENT.saved=false; updateSaveStar(); toast('Removed from shortcuts'); });
-  } else {
-    dbPut({ url:CURRENT.url, title:CURRENT.title, host:CURRENT.host, src:CURRENT.src,
-            html:CURRENT.html, savedAt:Date.now(), lastRead:Date.now() })
-      .then(function(){ CURRENT.saved=true; updateSaveStar(); toast('Saved — opens instantly next time'); });
-  }
-}
-
-/* ---------- library ---------- */
-function paintLibrary(){
-  dbAll().then(function(links){
-    links.sort(function(a,b){ return (b.lastRead||b.savedAt)-(a.lastRead||a.savedAt); });
-    var box=$('libList');
-    if(!links.length){ box.innerHTML='<div class="empty">No shortcuts yet. Read a link above, then tap ☆ in the reader to pin it here.</div>'; return; }
-    box.innerHTML='';
-    links.forEach(function(l){
-      var el=document.createElement('div'); el.className='tile';
-      var letter=(l.host||'?').charAt(0).toUpperCase();
-      el.innerHTML=
-        '<div class="fav"><img src="https://www.google.com/s2/favicons?domain='+encodeURIComponent(l.host)+'&sz=64" '+
-          'onerror="this.replaceWith(document.createTextNode(\''+letter+'\'))"></div>'+
-        '<div class="meta"><b>'+esc(l.title)+'</b><i>'+esc(l.host)+'</i></div>'+
-        '<button class="del">🗑</button>';
-      el.querySelector('.meta').onclick=function(){ LIST=null; openUrl(l.url); };
-      el.querySelector('.fav').onclick=function(){ LIST=null; openUrl(l.url); };
-      el.querySelector('.del').onclick=function(){ if(confirm('Remove "'+l.title+'"?')) dbDel(l.url).then(paintLibrary); };
-      box.appendChild(el);
+    // Font size
+    document.getElementById('fontUp').addEventListener('click', () => {
+      currentFontSize = Math.min(22, currentFontSize + 1);
+      document.getElementById('artBody').style.fontSize = currentFontSize + 'px';
     });
-  });
-}
+    document.getElementById('fontDown').addEventListener('click', () => {
+      currentFontSize = Math.max(14, currentFontSize - 1);
+      document.getElementById('artBody').style.fontSize = currentFontSize + 'px';
+    });
 
-/* ---------- reader theming ---------- */
-var THEMES={
-  paper:{bg:'#FDFBF4',ink:'#1D1A15',rule:'#E4DECC',mut:'#7A7160',bar:'#FDFBF4'},
-  sepia:{bg:'#F3E5C8',ink:'#46351D',rule:'#DCC9A4',mut:'#8A7350',bar:'#F3E5C8'},
-  slate:{bg:'#191C21',ink:'#D8D4CA',rule:'#31353D',mut:'#8B8F98',bar:'#191C21'},
-  black:{bg:'#000000',ink:'#B9B5AC',rule:'#242424',mut:'#6F6C66',bar:'#000000'}
-};
-function applyReader(){
-  var t=THEMES[READER.theme]||THEMES.paper;
-  ['reader','aaPanel'].forEach(function(id){
-    var el=$(id);
-    el.style.setProperty('--r-bg',t.bg); el.style.setProperty('--r-ink',t.ink);
-    el.style.setProperty('--r-rule',t.rule); el.style.setProperty('--r-mut',t.mut);
-  });
-  var r=$('reader'); r.style.setProperty('--fs',READER.size+'px'); r.style.setProperty('--lh',READER.lh);
-  $('aaPanel').style.color=t.ink;
-  document.querySelector('meta[name=theme-color]').content=t.bar;
-  var prose=$('rdBody'); prose.classList.toggle('sans',READER.font==='sans'); prose.classList.toggle('just',!!READER.just);
-  $('ctlSize').value=READER.size; $('ctlLh').value=READER.lh;
-  $('fSerif').classList.toggle('on',READER.font==='serif');
-  $('fSans').classList.toggle('on',READER.font==='sans');
-  $('fJust').classList.toggle('on',!!READER.just);
-  document.querySelectorAll('.sw').forEach(function(s){ s.classList.toggle('on',s.dataset.th===READER.theme); });
-}
+    // Back
+    document.getElementById('backBtn').addEventListener('click', goHome);
 
-/* ---------- Aa panel ---------- */
-function openAa(open){ $('aaPanel').classList.toggle('open',open); $('scrim').classList.toggle('hide',!open); }
-$('btnAa').onclick=function(){ openAa(true); };
-$('scrim').onclick=function(){ openAa(false); };
-$('ctlSize').oninput=function(e){ READER.size=+e.target.value; saveReader(); applyReader(); };
-$('ctlLh').oninput=function(e){ READER.lh=+e.target.value; saveReader(); applyReader(); };
-$('fSerif').onclick=function(){ READER.font='serif'; saveReader(); applyReader(); };
-$('fSans').onclick=function(){ READER.font='sans'; saveReader(); applyReader(); };
-$('fJust').onclick=function(){ READER.just=!READER.just; saveReader(); applyReader(); };
-document.querySelectorAll('.sw').forEach(function(s){ s.onclick=function(){ READER.theme=s.dataset.th; saveReader(); applyReader(); }; });
+    // Paste new link flow
+    const newLinkInput = document.getElementById('newLinkInput');
+    const submitNewLink = document.getElementById('submitNewLink');
 
-/* ---------- settings ---------- */
-function openSettings(){ $('setProxy').value=CFG.proxy; $('setJinaKey').value=CFG.jinaKey; $('mSettings').classList.remove('hide'); }
-$('btnSettings').onclick=openSettings;
-$('btnCloseSet').onclick=function(){ $('mSettings').classList.add('hide'); };
-$('btnSaveSet').onclick=function(){
-  CFG.proxy=$('setProxy').value; CFG.jinaKey=$('setJinaKey').value.trim();
-  localStorage.setItem('lk_proxy',CFG.proxy); localStorage.setItem('lk_jinakey',CFG.jinaKey);
-  $('mSettings').classList.add('hide'); toast('Saved');
-};
+    submitNewLink.addEventListener('click', () => {
+      const url = newLinkInput.value.trim();
+      if (!url) {
+        showToast('Please paste a newspaper link first');
+        return;
+      }
+      if (!url.startsWith('http')) {
+        showToast('Please enter a valid URL starting with https://');
+        return;
+      }
+      document.getElementById('modalText').innerHTML = `I’ll extract headlines & full articles from:<br><strong style="word-break:break-all;font-size:13px">${url}</strong><br><br>Share this link with me in the chat and I’ll generate a fresh beautiful mobile reader for you in seconds.`;
+      modal.classList.add('show');
+      modal.dataset.url = url;
+    });
 
-/* ---------- wiring ---------- */
-$('btnGo').onclick=function(){ handleLink($('urlInput').value, true); $('urlInput').value=''; };
-$('urlInput').addEventListener('keydown',function(e){ if(e.key==='Enter'){ $('btnGo').click(); } });
-$('btnPrepAll').onclick=prepareAll;
-$('btnListBack').onclick=function(){ PREP.running=false; $('prepBar').classList.add('hide'); paintLibrary(); show('vHome'); };
-$('btnLoadBack').onclick=function(){ show('vHome'); };
-$('btnRdBack').onclick=function(){ if(LIST){ show('vList'); } else { paintLibrary(); show('vHome'); } };
-$('btnSave').onclick=toggleSave;
+    document.getElementById('modalCancel').addEventListener('click', () => {
+      modal.classList.remove('show');
+    });
 
-/* ---------- share-target / ?url= deep link ---------- */
-function handleIncoming(){
-  var p=new URLSearchParams(location.search);
-  var shared=p.get('url')||p.get('text')||p.get('link');
-  if(shared){ var m=shared.match(/https?:\/\/\S+/); if(m){ handleLink(m[0], true); return true; } }
-  return false;
-}
+    document.getElementById('modalConfirm').addEventListener('click', () => {
+      const url = modal.dataset.url;
+      // Copy to clipboard so user can easily paste to Grok
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('Link copied! Now paste it in the chat with Grok');
+      }).catch(() => {
+        showToast('Please copy the link and send it to Grok');
+      });
+      modal.classList.remove('show');
+      newLinkInput.value = '';
+    });
 
-/* ---------- boot ---------- */
-$('todayLine').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
-openDB().then(function(){ paintLibrary(); handleIncoming(); });
-</script>
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2800);
+    }
+
+    // Init
+    renderList();
+  </script>
 </body>
 </html>
