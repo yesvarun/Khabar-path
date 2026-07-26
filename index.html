@@ -1443,7 +1443,7 @@
 
       for (const a of candidates) {
         let href = a.getAttribute('href') || '';
-        const title = (a.textContent || a.getAttribute('title') || '').replace(/\s+/g, ' ').trim();
+        const title = getCleanText(a) || (a.getAttribute('title') || '').replace(/\s+/g, ' ').trim();
         if (!title || title.length < 18 || title.length > 180) continue;
         if (/^(home|login|subscribe|advertisement|menu|search|sign|register|about|contact|privacy|terms|cookie)/i.test(title)) continue;
 
@@ -1460,7 +1460,7 @@
         const parent = a.closest('article, .story, .card, .news-item, li, div') || a.parentElement;
         if (parent) {
           const p = parent.querySelector('p, .summary, .excerpt, .description, .dek');
-          if (p) summary = p.textContent.replace(/\s+/g, ' ').trim().slice(0, 180);
+          if (p) summary = getCleanText(p).slice(0, 180);
         }
 
         // Category guess from URL or nearby
@@ -1513,6 +1513,31 @@
       if (lines) lines.innerHTML = '';
     }
 
+    // Extract text without joining words (fixes missing spaces between spans)
+    function getCleanText(el) {
+      if (!el) return '';
+      const parts = [];
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, null, false);
+      let node;
+      while (node = walker.nextNode()) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const t = node.nodeValue.replace(/\s+/g, ' ');
+          if (t.trim()) parts.push(t);
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          const tag = node.tagName;
+          // Add space/newline at block boundaries
+          if (/^(P|DIV|BR|LI|H1|H2|H3|H4|H5|H6|BLOCKQUOTE|SECTION|ARTICLE|TR)$/i.test(tag)) {
+            parts.push(' ');
+          }
+        }
+      }
+      return parts.join('')
+        .replace(/\s+/g, ' ')
+        .replace(/\s+([.,!?;:%)\]])/g, '$1')
+        .replace(/([(\[])\s+/g, '$1')
+        .trim();
+    }
+
     async function loadFullArticle(article) {
       if (!article.url || article._fullLoaded) return article;
       try {
@@ -1535,17 +1560,17 @@
           const nodes = doc.querySelectorAll(sel);
           if (nodes.length >= 2) {
             content = Array.from(nodes).map(n => {
-              const t = n.textContent.replace(/\s+/g, ' ').trim();
+              const t = getCleanText(n);
               return t.length > 35 ? `<p>${t}</p>` : '';
             }).filter(Boolean).join('');
             if (content.length > 400) break;
           }
         }
 
-        // Last resort: largest text block
+        // Last resort: largest text blocks with clean spacing
         if (content.length < 300) {
           const allP = Array.from(doc.querySelectorAll('p'))
-            .map(p => p.textContent.replace(/\s+/g, ' ').trim())
+            .map(p => getCleanText(p))
             .filter(t => t.length > 60);
           if (allP.length >= 3) {
             content = allP.slice(0, 25).map(t => `<p>${t}</p>`).join('');
