@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0a1628" />
-  <title>The Tribune • Easy Read</title>
+  <title>NewsEase • Easy Read</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
@@ -427,6 +427,151 @@
       transition: background 0.15s;
     }
     .ctrl-btn:active { background: var(--bg); }
+    .ctrl-btn.summarise {
+      width: auto;
+      padding: 0 14px;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    /* ========== FULLSCREEN SUMMARY ========== */
+    .summary-view {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: var(--bg);
+      display: none;
+      flex-direction: column;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+    }
+    .summary-view.show { display: flex; }
+
+    .summary-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .summary-close {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .summary-title-label {
+      font-family: var(--title-font);
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .summary-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 20px 40px;
+      max-width: 640px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .summary-story-title {
+      font-family: var(--title-font);
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      line-height: 1.3;
+      color: var(--text-secondary);
+    }
+
+    .summary-text {
+      font-size: 17px;
+      line-height: 1.7;
+      color: var(--text);
+    }
+    .summary-text p { margin-bottom: 1em; }
+
+    /* Magic loading animation */
+    .magic-loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 280px;
+      gap: 20px;
+    }
+    .magic-orb {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #7c3aed, #06b6d4);
+      background-size: 200% 200%;
+      animation: orbPulse 2s ease-in-out infinite, orbGradient 3s ease infinite;
+      box-shadow: 0 0 40px rgba(196, 30, 58, 0.35), 0 0 80px rgba(124, 58, 237, 0.2);
+      position: relative;
+    }
+    .magic-orb::before {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      border-top-color: var(--accent);
+      animation: spin 1.2s linear infinite;
+    }
+    .magic-sparkles {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      pointer-events: none;
+    }
+    .magic-sparkles span {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      opacity: 0;
+      animation: sparkle 1.8s ease-in-out infinite;
+    }
+    .magic-sparkles span:nth-child(1) { top: 10%; left: 50%; animation-delay: 0s; }
+    .magic-sparkles span:nth-child(2) { top: 30%; left: 85%; animation-delay: 0.3s; }
+    .magic-sparkles span:nth-child(3) { top: 70%; left: 80%; animation-delay: 0.6s; }
+    .magic-sparkles span:nth-child(4) { top: 85%; left: 40%; animation-delay: 0.9s; }
+    .magic-sparkles span:nth-child(5) { top: 40%; left: 10%; animation-delay: 1.2s; }
+    .magic-sparkles span:nth-child(6) { top: 15%; left: 20%; animation-delay: 1.5s; }
+
+    .magic-status {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    @keyframes orbPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+    @keyframes orbGradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes sparkle {
+      0%, 100% { opacity: 0; transform: scale(0.5); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
 
     /* ========== DICTIONARY POPUP ========== */
     .dict-popup {
@@ -782,9 +927,9 @@
   <!-- Header -->
   <header class="app-header">
     <div class="brand">
-      <div class="brand-logo">T</div>
+      <div class="brand-logo">N</div>
       <div>
-        <div class="brand-text">The Tribune</div>
+        <div class="brand-text">NewsEase</div>
         <div class="brand-sub">Easy Read Mode</div>
       </div>
     </div>
@@ -863,6 +1008,33 @@
     </div>
   </div>
 
+  <!-- FULLSCREEN SUMMARY VIEW -->
+  <div class="summary-view" id="summaryView">
+    <div class="summary-header">
+      <button class="summary-close" id="summaryClose">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <div class="summary-title-label">✨ Summary</div>
+      <div style="width:60px"></div>
+    </div>
+    <div class="summary-body" id="summaryBody">
+      <div class="magic-loader" id="magicLoader">
+        <div style="position:relative;width:120px;height:120px;display:grid;place-items:center;">
+          <div class="magic-sparkles">
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="magic-orb"></div>
+        </div>
+        <div class="magic-status" id="magicStatus">Weaving the essence…</div>
+      </div>
+      <div id="summaryResult" style="display:none;">
+        <div class="summary-story-title" id="summaryStoryTitle"></div>
+        <div class="summary-text" id="summaryText"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- VOCABULARY VIEW -->
   <div id="vocabView" class="view">
     <div class="vocab-content">
@@ -884,6 +1056,9 @@
   <div class="reader-controls" id="readerControls">
     <button class="ctrl-btn" id="fontDown" title="Smaller text">A−</button>
     <button class="ctrl-btn" id="fontUp" title="Larger text">A+</button>
+    <button class="ctrl-btn summarise" id="summariseBtn" title="Summarise this story">
+      ✨ Summarise
+    </button>
     <button class="ctrl-btn" id="openSettings" title="More settings">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="3"/>
@@ -1764,6 +1939,93 @@
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 3200);
     }
+
+    // ========== SUMMARISE ==========
+    let currentArticleForSummary = null;
+
+    function extractiveSummary(html, title) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      const plain = (tmp.textContent || '').replace(/\s+/g, ' ').trim();
+      if (!plain || plain.length < 80) {
+        return `<p>${title}</p><p>Not enough text to summarise yet. Open the story fully first.</p>`;
+      }
+
+      // Split into sentences
+      const sentences = plain
+        .replace(/([.!?])\s+/g, '$1|')
+        .split('|')
+        .map(s => s.trim())
+        .filter(s => s.length > 40 && s.length < 320);
+
+      if (sentences.length === 0) {
+        return `<p>${plain.slice(0, 400)}${plain.length > 400 ? '…' : ''}</p>`;
+      }
+
+      // Score: prefer early sentences + those with key words from title
+      const titleWords = new Set(
+        title.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 3)
+      );
+      const scored = sentences.map((s, i) => {
+        let score = Math.max(0, 12 - i); // earlier = higher
+        const lower = s.toLowerCase();
+        titleWords.forEach(w => { if (lower.includes(w)) score += 3; });
+        if (/\d{4}|\d+%|said|according|announced|reported/.test(lower)) score += 2;
+        return { s, score };
+      });
+      scored.sort((a, b) => b.score - a.score);
+
+      const pick = scored.slice(0, Math.min(5, Math.max(3, Math.ceil(sentences.length / 4))));
+      // Keep original order for readability
+      const ordered = pick
+        .map(p => ({ ...p, idx: sentences.indexOf(p.s) }))
+        .sort((a, b) => a.idx - b.idx)
+        .map(p => p.s);
+
+      return ordered.map(s => `<p>${s}</p>`).join('');
+    }
+
+    async function runSummarise() {
+      const title = document.getElementById('artTitle').textContent;
+      const bodyHtml = document.getElementById('artBody').innerHTML;
+      currentArticleForSummary = { title, bodyHtml };
+
+      const summaryView = document.getElementById('summaryView');
+      const magicLoader = document.getElementById('magicLoader');
+      const summaryResult = document.getElementById('summaryResult');
+      const magicStatus = document.getElementById('magicStatus');
+
+      summaryView.classList.add('show');
+      magicLoader.style.display = 'flex';
+      summaryResult.style.display = 'none';
+      readerControls.classList.remove('show');
+
+      const stages = [
+        'Gathering key threads…',
+        'Weaving the essence…',
+        'Distilling the story…',
+        'Polishing the summary…'
+      ];
+      for (let i = 0; i < stages.length; i++) {
+        magicStatus.textContent = stages[i];
+        await new Promise(r => setTimeout(r, 700 + Math.random() * 400));
+      }
+
+      const summaryHtml = extractiveSummary(bodyHtml, title);
+      document.getElementById('summaryStoryTitle').textContent = title;
+      document.getElementById('summaryText').innerHTML = summaryHtml;
+
+      magicLoader.style.display = 'none';
+      summaryResult.style.display = 'block';
+    }
+
+    document.getElementById('summariseBtn').addEventListener('click', runSummarise);
+    document.getElementById('summaryClose').addEventListener('click', () => {
+      document.getElementById('summaryView').classList.remove('show');
+      if (articleView.classList.contains('active')) {
+        readerControls.classList.add('show');
+      }
+    });
 
     // Init – restore previously parsed stories from browser storage (instant)
     applySettings();
