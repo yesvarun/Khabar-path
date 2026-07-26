@@ -380,6 +380,21 @@
       color: var(--text-secondary);
     }
 
+    /* Looked-up words – dull highlight (Kindle style) */
+    .article-body .looked-up {
+      background: rgba(196, 30, 58, 0.14);
+      border-radius: 3px;
+      padding: 1px 2px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+    [data-theme="sepia"] .article-body .looked-up {
+      background: rgba(166, 61, 46, 0.20);
+    }
+    [data-theme="dark"] .article-body .looked-up {
+      background: rgba(255, 77, 109, 0.25);
+    }
+
     /* Floating reader controls */
     .reader-controls {
       position: fixed;
@@ -979,6 +994,13 @@
       vocabulary = JSON.parse(localStorage.getItem('tribuneVocabulary') || '[]');
     } catch(e) {}
 
+    // Words that have been looked up (for dull highlighting)
+    let lookedUp = new Set();
+    try {
+      const savedLooked = JSON.parse(localStorage.getItem('tribuneLookedUp') || '[]');
+      lookedUp = new Set(savedLooked.map(w => w.toLowerCase()));
+    } catch(e) {}
+
     let currentDictWord = null;
 
     // ========== ELEMENTS ==========
@@ -1021,10 +1043,73 @@
       localStorage.setItem('tribuneReaderSettings', JSON.stringify(settings));
     }
 
-    // ========== VOCABULARY ==========
+    // ========== VOCABULARY + HIGHLIGHT ==========
     function saveVocabulary() {
       localStorage.setItem('tribuneVocabulary', JSON.stringify(vocabulary));
       updateVocabBadge();
+    }
+
+    function saveLookedUp() {
+      localStorage.setItem('tribuneLookedUp', JSON.stringify([...lookedUp]));
+    }
+
+    function markWordLookedUp(word) {
+      const key = word.toLowerCase();
+      if (!lookedUp.has(key)) {
+        lookedUp.add(key);
+        saveLookedUp();
+      }
+      // Re-highlight current article if open
+      if (articleView.classList.contains('active')) {
+        highlightLookedUpWords();
+      }
+    }
+
+    function highlightLookedUpWords() {
+      const body = document.getElementById('artBody');
+      if (!body || lookedUp.size === 0) return;
+
+      // Get plain text content and re-wrap looked-up words
+      // We work on text nodes to avoid breaking HTML structure
+      const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, null, false);
+      const textNodes = [];
+      let node;
+      while (node = walker.nextNode()) {
+        if (node.parentElement && !node.parentElement.classList.contains('looked-up') &&
+            node.parentElement.tagName !== 'SCRIPT' && node.parentElement.tagName !== 'STYLE') {
+          textNodes.push(node);
+        }
+      }
+
+      textNodes.forEach(textNode => {
+        const text = textNode.nodeValue;
+        if (!text || !text.trim()) return;
+
+        // Build regex of all looked-up words (word boundaries)
+        const words = [...lookedUp].filter(w => w.length > 1);
+        if (words.length === 0) return;
+
+        const pattern = new RegExp('\\b(' + words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b', 'gi');
+        if (!pattern.test(text)) return;
+
+        const frag = document.createDocumentFragment();
+        let lastIndex = 0;
+        text.replace(pattern, (match, p1, offset) => {
+          if (offset > lastIndex) {
+            frag.appendChild(document.createTextNode(text.slice(lastIndex, offset)));
+          }
+          const span = document.createElement('span');
+          span.className = 'looked-up';
+          span.textContent = match;
+          frag.appendChild(span);
+          lastIndex = offset + match.length;
+          return match;
+        });
+        if (lastIndex < text.length) {
+          frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+        }
+        textNode.parentNode.replaceChild(frag, textNode);
+      });
     }
 
     function updateVocabBadge() {
@@ -1091,7 +1176,7 @@
 
       // Position near top of viewport for simplicity on mobile
       dictPopup.style.left = '50%';
-      dictPopup.style.top = '30%';
+      dictPopup.style.top = '28%';
       dictPopup.style.transform = 'translateX(-50%)';
 
       try {
@@ -1113,6 +1198,9 @@
         document.getElementById('dictMeaning').textContent = meaning || 'No definition found.';
         document.getElementById('dictLoading').style.display = 'none';
         document.getElementById('dictContent').style.display = 'block';
+
+        // Immediately mark the word with dull color
+        markWordLookedUp(currentDictWord.word);
       } catch (err) {
         currentDictWord = { word, phonetic: '', meaning: 'Definition not found. Check spelling or try again later.' };
         document.getElementById('dictWord').textContent = word;
@@ -1120,6 +1208,7 @@
         document.getElementById('dictMeaning').textContent = currentDictWord.meaning;
         document.getElementById('dictLoading').style.display = 'none';
         document.getElementById('dictContent').style.display = 'block';
+        markWordLookedUp(word);
       }
     }
 
@@ -1144,31 +1233,79 @@
         date: Date.now()
       });
       saveVocabulary();
+      markWordLookedUp(currentDictWord.word);
       showToast(`“${currentDictWord.word}” saved`);
       closeDict();
     }
 
-    // Word selection / long-press handling
-    let touchTimer = null;
+    // Long-press + selection handling (Kindle-style)
     const artBody = document.getElementById('artBody');
+    let longPressTimer = null;
+    let longPressStartX = 0;
+    let longPressStartY = 0;
 
+    function getWordAtPoint(x, y) {
+      let range, textNode, offset;
+      if (document.caretRangeFromPoint) {
+        range = document.caretRangeFromPoint(x, y);
+      } else if (document.caretPositionFromPoint) {
+        const pos = document.caretPositionFromPoint(x, y);
+        if (pos) {
+          range = document.createRange();
+          range.setStart(pos.offsetNode, pos.offset);
+        }
+      }
+      if (!range || !range.startContainer || range.startContainer.nodeType !== Node.TEXT_NODE) return null;
+
+      textNode = range.startContainer;
+      offset = range.startOffset;
+      const text = textNode.textContent;
+      // Expand to full word
+      let start = offset, end = offset;
+      while (start > 0 && /[a-zA-Z'-]/.test(text[start - 1])) start--;
+      while (end < text.length && /[a-zA-Z'-]/.test(text[end])) end++;
+      const word = text.slice(start, end).trim();
+      return word.length > 1 ? word : null;
+    }
+
+    artBody.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 1) return;
+      const t = e.touches[0];
+      longPressStartX = t.clientX;
+      longPressStartY = t.clientY;
+      longPressTimer = setTimeout(() => {
+        const word = getWordAtPoint(longPressStartX, longPressStartY);
+        if (word) {
+          // Prevent default selection UI
+          e.preventDefault();
+          lookupWord(word);
+        }
+      }, 480); // ~0.5s long press
+    }, { passive: false });
+
+    artBody.addEventListener('touchmove', (e) => {
+      if (!longPressTimer) return;
+      const t = e.touches[0];
+      if (Math.abs(t.clientX - longPressStartX) > 12 || Math.abs(t.clientY - longPressStartY) > 12) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    }, { passive: true });
+
+    artBody.addEventListener('touchend', () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    });
+
+    // Desktop / selection fallback
     artBody.addEventListener('mouseup', () => {
       const sel = window.getSelection();
       if (sel && sel.toString().trim()) {
         const word = sel.toString().trim().split(/\s+/)[0];
         if (word.length > 1) lookupWord(word);
       }
-    });
-
-    artBody.addEventListener('touchend', (e) => {
-      // small delay to allow selection
-      setTimeout(() => {
-        const sel = window.getSelection();
-        if (sel && sel.toString().trim()) {
-          const word = sel.toString().trim().split(/\s+/)[0];
-          if (word.length > 1) lookupWord(word);
-        }
-      }, 50);
     });
 
     // ========== NAVIGATION ==========
@@ -1190,6 +1327,8 @@
       document.getElementById('artTime').textContent = a.time;
       document.getElementById('artBody').innerHTML = a.body;
       showView(articleView);
+      // Highlight any previously looked-up words
+      setTimeout(() => highlightLookedUpWords(), 30);
       updateProgress();
     }
 
