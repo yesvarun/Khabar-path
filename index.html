@@ -9,7 +9,7 @@
   <title>The Tribune • Easy Read</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #f7f4ef;
@@ -24,6 +24,21 @@
       --header-h: 56px;
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --body-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --title-font: 'Playfair Display', Georgia, serif;
+      --line-height: 1.75;
+      --font-size: 17px;
+    }
+
+    [data-theme="sepia"] {
+      --bg: #f4ecd8;
+      --surface: #faf6eb;
+      --text: #3e2723;
+      --text-secondary: #6d4c41;
+      --accent: #a63d2e;
+      --accent-soft: #f0e0d0;
+      --border: #e0d5c0;
+      --shadow: 0 4px 24px rgba(62,39,35,0.08);
     }
 
     [data-theme="dark"] {
@@ -41,7 +56,7 @@
 
     html, body {
       height: 100%;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: var(--body-font);
       background: var(--bg);
       color: var(--text);
       line-height: 1.5;
@@ -62,7 +77,7 @@
       align-items: center;
       justify-content: space-between;
       padding-left: 16px;
-      padding-right: 16px;
+      padding-right: 12px;
       backdrop-filter: blur(12px);
     }
 
@@ -82,11 +97,11 @@
       color: white;
       font-weight: 700;
       font-size: 14px;
-      font-family: 'Playfair Display', serif;
+      font-family: var(--title-font);
     }
 
     .brand-text {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--title-font);
       font-weight: 700;
       font-size: 18px;
       letter-spacing: -0.3px;
@@ -101,7 +116,7 @@
 
     .header-actions {
       display: flex;
-      gap: 8px;
+      gap: 4px;
     }
 
     .icon-btn {
@@ -109,14 +124,31 @@
       height: 40px;
       border-radius: 12px;
       border: none;
-      background: var(--bg);
+      background: transparent;
       color: var(--text);
       display: grid;
       place-items: center;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.2s, transform 0.15s;
+      position: relative;
     }
-    .icon-btn:active { transform: scale(0.94); }
+    .icon-btn:active { transform: scale(0.92); background: var(--bg); }
+
+    .badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      min-width: 16px;
+      height: 16px;
+      background: var(--accent);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      padding: 0 4px;
+    }
 
     /* ========== VIEWS ========== */
     .view { display: none; min-height: calc(100% - var(--header-h)); }
@@ -143,7 +175,7 @@
     }
 
     .section-title {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--title-font);
       font-size: 22px;
       font-weight: 600;
       margin-bottom: 4px;
@@ -155,7 +187,6 @@
       margin-bottom: 20px;
     }
 
-    /* Paste new link card */
     .paste-card {
       background: var(--surface);
       border: 1.5px dashed var(--border);
@@ -198,7 +229,6 @@
       font-weight: 600;
       font-size: 14px;
       cursor: pointer;
-      transition: opacity 0.2s;
     }
     .paste-btn:active { opacity: 0.85; }
 
@@ -209,7 +239,6 @@
       text-align: center;
     }
 
-    /* Article cards */
     .article-card {
       background: var(--surface);
       border-radius: var(--radius);
@@ -217,12 +246,9 @@
       margin-bottom: 12px;
       box-shadow: var(--shadow);
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-      border: 1px solid transparent;
+      transition: transform 0.2s;
     }
-    .article-card:active {
-      transform: scale(0.985);
-    }
+    .article-card:active { transform: scale(0.985); }
 
     .card-meta {
       display: flex;
@@ -248,7 +274,7 @@
     }
 
     .card-title {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--title-font);
       font-size: 17px;
       font-weight: 600;
       line-height: 1.35;
@@ -270,7 +296,18 @@
     .article-view {
       max-width: 680px;
       margin: 0 auto;
-      padding: 0 0 80px;
+      padding: 0 0 100px;
+    }
+
+    .progress-bar {
+      position: fixed;
+      top: calc(var(--header-h) + var(--safe-top));
+      left: 0;
+      height: 3px;
+      background: var(--accent);
+      width: 0%;
+      z-index: 99;
+      transition: width 0.1s linear;
     }
 
     .article-header {
@@ -301,7 +338,7 @@
     }
 
     .article-title {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--title-font);
       font-size: 26px;
       font-weight: 700;
       line-height: 1.25;
@@ -322,59 +359,329 @@
 
     .article-body {
       padding: 0 20px;
-      font-size: 17px;
-      line-height: 1.75;
+      font-size: var(--font-size);
+      line-height: var(--line-height);
       color: var(--text);
+      font-family: var(--body-font);
+      transition: font-size 0.2s, line-height 0.2s;
+      user-select: text;
+      -webkit-user-select: text;
     }
 
     .article-body p {
-      margin-bottom: 18px;
+      margin-bottom: 1.1em;
     }
 
     .article-body blockquote {
       border-left: 3px solid var(--accent);
       padding-left: 16px;
-      margin: 24px 0;
+      margin: 1.4em 0;
       font-style: italic;
       color: var(--text-secondary);
     }
 
-    /* Font size controls */
+    /* Floating reader controls */
     .reader-controls {
       position: fixed;
       bottom: calc(20px + var(--safe-bottom));
-      right: 16px;
-      display: flex;
-      gap: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      gap: 4px;
       z-index: 50;
+      background: var(--surface);
+      padding: 6px;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      border: 1px solid var(--border);
     }
+    .reader-controls.show { display: flex; }
 
     .ctrl-btn {
       width: 44px;
       height: 44px;
       border-radius: 14px;
       border: none;
-      background: var(--surface);
+      background: transparent;
       color: var(--text);
-      box-shadow: var(--shadow);
       font-weight: 600;
-      font-size: 16px;
+      font-size: 15px;
       cursor: pointer;
       display: grid;
       place-items: center;
+      transition: background 0.15s;
+    }
+    .ctrl-btn:active { background: var(--bg); }
+
+    /* ========== DICTIONARY POPUP ========== */
+    .dict-popup {
+      position: fixed;
+      z-index: 250;
+      background: var(--surface);
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+      border: 1px solid var(--border);
+      padding: 16px;
+      max-width: 300px;
+      width: 90vw;
+      display: none;
+      animation: popIn 0.2s ease;
+    }
+    .dict-popup.show { display: block; }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.92) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
     }
 
-    /* Empty / loading states */
-    .empty-state {
+    .dict-word {
+      font-family: var(--title-font);
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .dict-phonetic {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    .dict-meaning {
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 14px;
+      color: var(--text);
+    }
+
+    .dict-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dict-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .dict-btn.primary {
+      background: var(--accent);
+      color: white;
+    }
+    .dict-btn.secondary {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .dict-loading {
+      text-align: center;
+      padding: 12px;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    /* ========== VOCABULARY VIEW ========== */
+    .vocab-content {
+      padding: 16px 16px 80px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .vocab-empty {
       text-align: center;
       padding: 60px 20px;
       color: var(--text-secondary);
     }
 
+    .vocab-empty svg {
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .vocab-card {
+      background: var(--surface);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .vocab-word {
+      font-family: var(--title-font);
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .vocab-meaning {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+
+    .vocab-date {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+
+    .vocab-delete {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+    .vocab-delete:active { background: var(--bg); color: var(--accent); }
+
+    .vocab-search {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 16px;
+    }
+    .vocab-search:focus { border-color: var(--accent); }
+
+    /* ========== SETTINGS PANEL ========== */
+    .settings-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 300;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .settings-overlay.show { display: flex; }
+
+    .settings-sheet {
+      background: var(--surface);
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-width: 480px;
+      padding: 12px 20px calc(28px + var(--safe-bottom));
+      animation: sheetUp 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    @keyframes sheetUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 0 auto 18px;
+    }
+
+    .sheet-title {
+      font-family: var(--title-font);
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 22px;
+      text-align: center;
+    }
+
+    .setting-group { margin-bottom: 26px; }
+
+    .setting-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    .seg-control {
+      display: flex;
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 2px;
+    }
+
+    .seg-btn {
+      flex: 1;
+      padding: 10px 6px;
+      border: none;
+      background: transparent;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .seg-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .font-size-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .font-size-row .ctrl-btn {
+      background: var(--bg);
+      width: 42px;
+      height: 42px;
+    }
+    .size-display {
+      flex: 1;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .preview-box {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 8px;
+      font-size: var(--font-size);
+      line-height: var(--line-height);
+      font-family: var(--body-font);
+      color: var(--text);
+    }
+
+    .close-settings {
+      width: 100%;
+      margin-top: 8px;
+      padding: 14px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
     /* Toast */
     .toast {
       position: fixed;
-      bottom: 90px;
+      bottom: 100px;
       left: 50%;
       transform: translateX(-50%) translateY(20px);
       background: var(--text);
@@ -385,7 +692,7 @@
       font-weight: 500;
       opacity: 0;
       transition: all 0.3s;
-      z-index: 200;
+      z-index: 400;
       max-width: 90%;
       text-align: center;
       pointer-events: none;
@@ -395,7 +702,7 @@
       transform: translateX(-50%) translateY(0);
     }
 
-    /* Modal for paste confirmation */
+    /* Modal */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -423,7 +730,7 @@
     }
 
     .modal h3 {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--title-font);
       font-size: 20px;
       margin-bottom: 8px;
     }
@@ -467,13 +774,27 @@
       </div>
     </div>
     <div class="header-actions">
-      <button class="icon-btn" id="themeToggle" title="Toggle dark mode" aria-label="Toggle theme">
+      <button class="icon-btn" id="refreshBtn" title="Refresh" aria-label="Refresh">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="vocabBtn" title="My Vocabulary" aria-label="Vocabulary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+        <span class="badge" id="vocabBadge" style="display:none">0</span>
+      </button>
+      <button class="icon-btn" id="settingsBtn" title="Reader Settings" aria-label="Settings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
       </button>
     </div>
   </header>
+
+  <div class="progress-bar" id="progressBar"></div>
 
   <!-- HOME VIEW -->
   <div id="homeView" class="view active">
@@ -486,7 +807,6 @@
       <h1 class="section-title">Today’s Headlines</h1>
       <p class="section-sub">12 stories curated for easy mobile reading</p>
 
-      <!-- Paste new newspaper link -->
       <div class="paste-card">
         <div class="paste-label">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
@@ -497,7 +817,6 @@
         <p class="paste-hint">Works best with homepage URLs (e.g. tribuneindia.com, indianexpress.com, thehindu.com)</p>
       </div>
 
-      <!-- Article list will be injected here -->
       <div id="articleList"></div>
     </div>
   </div>
@@ -521,16 +840,104 @@
     </div>
   </div>
 
-  <!-- Reader controls (font size) -->
-  <div class="reader-controls" id="readerControls" style="display:none;">
-    <button class="ctrl-btn" id="fontDown" title="Smaller text">A−</button>
-    <button class="ctrl-btn" id="fontUp" title="Larger text">A+</button>
+  <!-- VOCABULARY VIEW -->
+  <div id="vocabView" class="view">
+    <div class="vocab-content">
+      <h1 class="section-title">My Vocabulary</h1>
+      <p class="section-sub" id="vocabCount">0 words saved</p>
+      <input type="search" class="vocab-search" id="vocabSearch" placeholder="Search saved words…" />
+      <div id="vocabList"></div>
+      <div class="vocab-empty" id="vocabEmpty" style="display:none">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+        <p>No words saved yet</p>
+        <p style="font-size:13px;margin-top:6px">Tap any word while reading to look it up and save it</p>
+      </div>
+    </div>
   </div>
 
-  <!-- Toast -->
+  <!-- Floating controls -->
+  <div class="reader-controls" id="readerControls">
+    <button class="ctrl-btn" id="fontDown" title="Smaller text">A−</button>
+    <button class="ctrl-btn" id="fontUp" title="Larger text">A+</button>
+    <button class="ctrl-btn" id="openSettings" title="More settings">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Dictionary Popup -->
+  <div class="dict-popup" id="dictPopup">
+    <div class="dict-loading" id="dictLoading">Looking up…</div>
+    <div id="dictContent" style="display:none">
+      <div class="dict-word" id="dictWord"></div>
+      <div class="dict-phonetic" id="dictPhonetic"></div>
+      <div class="dict-meaning" id="dictMeaning"></div>
+      <div class="dict-actions">
+        <button class="dict-btn secondary" id="dictClose">Close</button>
+        <button class="dict-btn primary" id="dictSave">Save Word</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Sheet -->
+  <div class="settings-overlay" id="settingsOverlay">
+    <div class="settings-sheet">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title">Reader Settings</h2>
+
+      <div class="setting-group">
+        <div class="setting-label">Theme</div>
+        <div class="seg-control" id="themeControl">
+          <button class="seg-btn" data-theme="light">Light</button>
+          <button class="seg-btn" data-theme="sepia">Sepia</button>
+          <button class="seg-btn" data-theme="dark">Dark</button>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <div class="setting-label">Font Size</div>
+        <div class="font-size-row">
+          <button class="ctrl-btn" id="setFontDown">A−</button>
+          <div class="size-display" id="sizeDisplay">17 px</div>
+          <button class="ctrl-btn" id="setFontUp">A+</button>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <div class="setting-label">Font Style</div>
+        <div class="seg-control" id="fontControl">
+          <button class="seg-btn" data-font="sans">Sans</button>
+          <button class="seg-btn" data-font="serif">Serif</button>
+          <button class="seg-btn" data-font="classic">Classic</button>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <div class="setting-label">Line Spacing</div>
+        <div class="seg-control" id="spacingControl">
+          <button class="seg-btn" data-spacing="1.5">Compact</button>
+          <button class="seg-btn" data-spacing="1.75">Comfort</button>
+          <button class="seg-btn" data-spacing="2.0">Relaxed</button>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <div class="setting-label">Preview</div>
+        <div class="preview-box" id="previewBox">
+          The quick brown fox jumps over the lazy dog. Reading should feel effortless and pleasant on any device.
+        </div>
+      </div>
+
+      <button class="close-settings" id="closeSettings">Done</button>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
-  <!-- Modal -->
   <div class="modal-overlay" id="modal">
     <div class="modal">
       <h3>Ready for a new paper?</h3>
@@ -543,253 +950,249 @@
   </div>
 
   <script>
-    // ========== ARTICLES DATA ==========
+    // ========== ARTICLES ==========
     const articles = [
-      {
-        id: 1,
-        category: "Delhi",
-        time: "10:03 AM",
-        author: "ANI",
-        title: "All Delhi Metro stations reopen after CJP calls off Jantar Mantar protest",
-        summary: "DMRC says both entry and exit gates at all stations are now open for passengers after the youth-led agitation ended.",
-        body: `<p>All stations of the Delhi Metro network were opened for passenger services on Sunday after the Cockroach Janata Party (CJP) called off its agitation at Jantar Mantar, ending days of security restrictions and staggered closures at 18 key central Delhi stations.</p>
-<p>The Delhi Metro Rail Corporation (DMRC) said that both entry and exit gates at all stations are now open for passengers.</p>
-<blockquote>“Service Update: All stations of the Delhi Metro network are open (both entry and exit) for passenger services,” DMRC said in a post on X.</blockquote>
-<p>The decision follows days of security restrictions and staggered closures at key stations, including Rajiv Chowk, Central Secretariat, Mandi House, ITO and New Delhi, causing major disruptions for commuters during peak hours.</p>
-<p>The closed stations included Lok Kalyan Marg, Rajiv Chowk, Patel Chowk, Ramakrishna Ashram Marg, Barakhambha Road, Supreme Court, Seva Teerth, Janpath, Mandi House, Central Secretariat, ITO, Delhi Gate, Indraprastha, Khan Market, Jor Bagh, Shivaji Stadium, Jhandewalan and New Delhi.</p>
-<p>The restrictions were lifted after security personnel and law enforcement agencies cleared barriers at major central Delhi stations following an assessment of the situation after the official end of the sit-in at Jantar Mantar.</p>
-<p>Meanwhile, internet services have also been restored at the Jantar Mantar protest site and neighbouring areas of Central Delhi after the CJP announced the withdrawal of its agitation.</p>
-<p>The administration had imposed mobile internet restrictions in the area for several days as the youth-led protest over NEET-UG examination irregularities grew in numbers.</p>
-<p>The CJP said it withdrew the agitation in “good faith” after receiving assurances from the government on its demands.</p>
-<p>“Cockroach Janta Party declares that we withdraw the agitation in good faith, with the understanding that the agreed-upon terms will be executed within the agreed-upon timelines,” CJP Chief Spokesperson Saurav Das said.</p>
-<p>The development came after Dharmendra Pradhan resigned from the Union Education Minister’s post following over a month-long protest, including the CJP’s agitation at Jantar Mantar and a 26-day hunger strike by activist Sonam Wangchuk.</p>
-<p>The CJP said the Central government had agreed to provide suitable compensation to the families of NEET aspirants who died by suicide and assured the withdrawal of FIRs lodged against protesters across the country.</p>
-<p>Union Minister JP Nadda said the government had considered and accepted the demands raised during talks on reforms in the examination system and other issues related to the protests.</p>
-<p>Following Pradhan’s resignation, newly appointed Union Education Minister Prahlad Joshi said he would fulfil the responsibility with “complete humility and responsibility.”</p>`
-      },
-      {
-        id: 2,
-        category: "India",
-        time: "11:15 AM",
-        author: "ANI",
-        title: "‘This is just the beginning’: CJP’s Abhijeet Dipke after 37-day protest over NEET-UG paper leak",
-        summary: "CJP founder thanks supporters, says criticism made the movement stronger; vows to continue campaign for examination reforms.",
-        body: `<p>Cockroach Janata Party (CJP) founder Abhijeet Dipke on Sunday thanked supporters across the country for backing its 37-day agitation, saying their support and trust made the “huge victory of the youth” possible.</p>
-<p>In a video shared on X, Dipke said the prolonged agitation had been difficult for the entire team and thanked those who stood by the movement despite criticism and doubts.</p>
-<blockquote>“It feels really good... finally, at last, I have been able to sleep peacefully and wake up in my bedroom without thinking about what to do next, or what will happen by this evening or not. There is no panic,” he said.</blockquote>
-<p>“What we went through in the last 37 days was really, really difficult. It was not easy—not just for me, but for all of our team,” Dipke added.</p>
-<p>He expressed gratitude to supporters of the CJP across India, saying, “All the people who supported us, who showed trust in us, and who loved us when everybody was doubting us—I really want to thank you all from the bottom of my heart. Without your support, this wouldn't have been possible.”</p>
-<p>Dipke also apologised for not being able to meet everyone who remained at Jantar Mantar after the protest was called off, citing his health condition.</p>
-<p>“I also really want to apologise; I couldn't meet all the people who were still waiting at Jantar Mantar yesterday to say thank you to them because, as you know, I have typhoid and I had developed a very high fever—my temperature had reached 101. That is why I had to come home,” he said.</p>
-<p>Thanking those who stayed at the protest site for 37 days, Dipke said their efforts were significant for the country.</p>
-<p>“I really, really, really appreciate what you did for this country. And I really, really love you all. Without you guys, we wouldn't have been able to achieve this. Salute to you all,” he said.</p>
-<p>The CJP founder also thanked those who had criticised or questioned the movement, saying the criticism helped it improve.</p>
-<blockquote>“If you hadn't criticised us, if you hadn't questioned us, we perhaps wouldn't have had the chance to improve ourselves. It's because of your criticism, it's because of your legitimate questions, that we were able to improve ourselves, and I think that's why we were able to deliver as well,” Dipke said.</blockquote>
-<p>He further said the outfit would continue its journey, asserting that the end of the agitation was only the beginning.</p>
-<p>“As I said, and as I have been saying since day one: this is just a beginning. The Cockroach Janta Party has a long way to go, and for sure, we will go a long way. This is just a beginning,” he said.</p>
-<p>The 37-day-long agitation culminated with the resignation of Union Education Minister Dharmendra Pradhan on Saturday amid nationwide protests over the NEET-UG 2026 paper leak. The CJP subsequently withdrew its protest from Jantar Mantar after receiving assurances from the government on its demands.</p>
-<p>Union Ministers J P Nadda and Jitendra Singh held talks with the CJP and accepted its demand for suitable compensation to the families of NEET aspirants who died by suicide and assured the withdrawal of FIRs lodged against protesters across the country.</p>
-<p>The government also agreed to examine the outfit's five-point charter on examination reforms, with the next round of talks scheduled after four weeks.</p>`
-      },
-      {
-        id: 3,
-        category: "India",
-        time: "12:29 PM",
-        author: "PTI",
-        title: "Prahlad Joshi takes charge as Education Minister",
-        summary: "Joshi was appointed Education Minister after Dharmendra Pradhan resigned from the post on Saturday.",
-        body: `<p>Newly appointed Union Education Minister Prahlad Joshi has taken charge, officials said on Sunday.</p>
-<p>Joshi was appointed Education Minister after Dharmendra Pradhan resigned from the post on Saturday.</p>
-<p>Joshi has been given additional charge of the Education Ministry besides his role as the Consumer Affairs Minister.</p>
-<p>Pradhan resigned from his post on Saturday following the Cockroach Janta Party-led student protests across the country, demanding his ouster over the NEET paper leak controversy.</p>
-<p>In his resignation letter, Pradhan said it was not a matter of “individual prestige” for him, and that he was disturbed to see the series of events that unfolded over the last 10 days.</p>`
-      },
-      {
-        id: 4,
-        category: "Top Headlines",
-        time: "11:20 AM",
-        author: "Aditi Tandon",
-        title: "Slipping narrative, swelling protests did Pradhan in",
-        summary: "NEET protest pressure forces BJP's first major ministerial sacrifice amid public agitation.",
-        body: `<p>It’s not routine for a member of the BJP’s largely silent Margdarshak Mandal to speak, let alone publicly. So when Murli Manohar Joshi, 92, took to X on Thursday to flag the imperatives of engagement with the Jantar Mantar protesters or risk alienating them from the goal of Viksit Bharat, his remarks were anything but routine.</p>
-<p>They were seen as well-timed and calibrated. Sections within the Sangh Parivar even believed Joshi’s X post had Prime Minister Narendra Modi’s backing and that heads might finally roll.</p>
-<p>And today, a head did roll. Thirty-six days after the Cockroach Janta Party (CJP)-led movement persisted with its demand for the resignation of Education Minister Dharmendra Pradhan over the 2026 NEET-UG paper leak, he put in his papers, citing the need to keep “anti-India forces at bay” and protect the future of India’s youth.</p>
-<p>The development was seen in political circles as PM Modi’s capitulation in the face of growing protests. The reason: this is the first time in eight years that an NDA minister has stepped down amid sustained public pressure. The last and only NDA minister to resign was MJ Akbar in 2018. But Akbar was a Minister of State and a political lightweight, unlike Pradhan, a Cabinet minister and a key member of Home Minister Amit Shah’s election strategy and management team.</p>
-<p>Pradhan was credited with the BJP’s hat-trick in Haryana in 2024 and with ending the Naveen Patnaik-led BJD’s 24-year rule in Odisha the same year. He later oversaw the BJP’s victory in the 2025 Bihar Assembly elections, having earlier steered the party to wins in Uttar Pradesh (2022), Uttarakhand (2017) and Jharkhand (2014).</p>
-<p>His value to the party was clearly too significant to ignore. That explains the BJP’s abiding insistence on retaining him until, of course, things changed on July 20, when the ruling party as well as the security establishment were jolted by the scale of the CJP’s “Chalo Sansad” call.</p>
-<p>That was the day the government first woke up to the movement’s potential to spread beyond Delhi and beyond the call for Pradhan’s ouster. Farmer leaders had already begun expressing solidarity, and support was growing by the day. The BJP’s internal assessment was that while the year-long farmers’ agitation was mostly powered by Punjab, the CJP-led protests were drawing participation from across the country.</p>
-<p>The swelling protests also signalled a loss of grip on the political narrative — a reason why PM Modi resorted to two rare selfie videos on Instagram, where Gen Z had mobilised around the CJP movement. NDA allies also nudged the government to act with even elements within the right wing flagging on social media that the government’s response was already late, and that time, which was of essence in the agitation at hand, had already been lost.</p>
-<p>A growing protest, a slipping narrative and the imperative of running a strained Parliament with the focus on legislative agenda, including the new anti-paper leak law listed on Monday, together formed the mix of factors that eventually led to Pradhan’s ouster today.</p>
-<p>Within the BJP, too, there was growing unease, with some leaders harking back to delayed response during the farmers’ agitation, when the farm laws were repealed only after prolonged protests. Sources said the lessons from the farmers’ protests were also weighing on the party leadership as the CJP agitation gathered momentum and spread further.</p>
-<blockquote>“There was a growing realisation that Pradhan’s resignation was key to the collective government goal of dousing the CJP protests before anti-national forces infiltrated the agitation for political ends and to derail the government’s reform agenda. The protest script does bear uncanny similarities to what India’s neighbourhood saw in recent times in the shape of regime changes. Our government deemed it fit to retreat so that democracy could advance. The fact that the CJP has ended its protest shows that, ultimately, Indian democracy won,” a BJP insider said.</blockquote>
-<p>Sources said Rahul Gandhi’s continued “fanning of CJP protests” and the Congress’ insistence on not letting Parliament run until Pradhan was removed also weighed on the government’s mind before the final decision.</p>
-<p>The broad assessment in the party however is that the ultimate aim behind letting Pradhan go was to “thwart anti-India forces from exploiting the CJP protests to disturb peace amid intel on potential security risks.”</p>
-<p>All that said, PM Modi ultimately appears to have buckled in order to pacify the youth, whom he has always described as one of the four pillars of the goal of Viksit Bharat by 2047, alongside farmers, women and the poor.</p>`
-      },
-      {
-        id: 5,
-        category: "India",
-        time: "01:29 AM",
-        author: "Surya S Pillai",
-        title: "Melody toffees, roses, tears: Jantar Mantar erupts",
-        summary: "Gen Z protesters broke into impromptu dances on popular Bollywood songs as soon as the announcement of Dharmendra Pradhan's resignation was made.",
-        body: `<p>Gen Z protesters broke into impromptu dances on popular Bollywood songs as soon as the announcement of Dharmendra Pradhan's resignation was made. Anyone visiting the site was welcomed with Melody toffees, the confectionery that made headlines after the portmanteau “Melodi”, reflecting Prime Minister Narendra Modi’s camaraderie with Italian Prime Minister Giorgia Meloni, became a viral trend, particularly after Modi gifted a packet of Melody to his Italian counterpart.</p>
-<blockquote>“We were harassed, beaten by the Delhi Police, called ‘anti-national’, and shamed by the godi media. But this day is the culmination of our struggle and determination. We were sure we would not budge until that man resigned,” said Riya Kapoor, a medical student.</blockquote>
-<p>Young men and women hugged one another, wiped away tears and once again proudly displayed their innovative and cheeky placards. They will remember the friendships forged at the site, the food shared and, of course, their collective resistance to alleged police brutality.</p>
-<p>A tight ring of police security and deployment of RAF personnel around the historic protest site did not deter the students from celebrating their win. Some of them also offered Melody toffees and roses to the security personnel who a few week ago brutally beat them up.</p>
-<blockquote>"My happiness knows no bounds. I came here from Lucknow, slept at metro stations and the protest site. Today, I feel the sacrifice paid off. I am proud to bring an incompetent government to its knees," Mayank Sharma said.</blockquote>
-<p>Gen Z were back with their selfie sticks, taking photographs of themselves and their friends.</p>
-<p>"I will post the pictures when I get back home. I will flash a proud smile when I will meet my parents," a protester said.</p>
-<p>So is the crowd going back?</p>
-<p>"Some of them are going back, some are yet to decide on their next step. But today is the day to celebrate. Finally, I will get a good night's sleep," Manish said.</p>`
-      },
-      {
-        id: 6,
-        category: "India",
-        time: "12:22 PM",
-        author: "PTI",
-        title: "CJP protest: Rahul writes to Amit Shah, demands accountability for ‘barbaric’ assault on students",
-        summary: "Leader of Opposition demands answers over use of lethal force, including pellet guns, against peacefully protesting students.",
-        body: `<p>Leader of Opposition in the Lok Sabha Rahul Gandhi has written to Home Minister Amit Shah, demanding accountability for the “barbaric assault” on peacefully protesting students here and asking whether he approved the use of “lethal force”, including pellet guns, against the youth.</p>
-<p>In his letter to Shah, Gandhi said peaceful protest is crucial to any democracy and it is the government’s responsibility to protect protesters and resolve their grievances through dialogue.</p>
-<blockquote>“Such brutal violence destroys every norm, and has outraged the country. Youth and students, the future of our country, are demanding answers and accountability. Their voice will be heard,” the former Congress chief said.</blockquote>
-<p>“I write to demand accountability for the barbaric assault on students who were peacefully protesting in Delhi on July 20, 2026. Our students were demanding a fair and accountable education system. Instead of being heard, security forces assaulted them with indiscriminate force, including lethal weapons and tear gas,” Gandhi said in his letter dated July 25.</p>
-<p>“Hundreds have suffered serious injuries and women students have been assaulted by policemen, including by deliberately targeting their private parts,” he said.</p>
-<p>Gandhi said most shocking has been the use of lethal pellet guns.</p>
-<blockquote>“Reports in the media and social media clearly show people who have suffered grave injuries including a journalist. I met 19-year old student Sahil Lochab, who is now in severe pain and is likely to lose an eye because he was shot with pellet guns,” he said.</blockquote>
-<p>“Security forces deployed in Delhi answer ultimately to you, so I ask: As Home Minister, did you approve the use of lethal force, including pellet guns against students? If not, who did?” Gandhi said.</p>
-<p>“Are the people in plain clothes seen beating students with lathis police personnel or volunteers? Who authorised their deployment?” Gandhi further questioned.</p>
-<p>“Peaceful protest is crucial to any democracy. It is the government’s responsibility to protect protesters and resolve their grievances through dialogue. Such brutal violence destroys every norm, and has outraged the country.”</p>
-<p>The protests were spearheaded by the CJP, a platform launched by Abhijeet Dipke as a satirical online campaign in May before it evolved into a nationwide youth movement centred on demands for accountability over the NEET paper leak.</p>
-<p>The agitation began at Jantar Mantar on June 20 but acquired national momentum after activist Sonam Wangchuk joined it on June 28 and undertook an indefinite fast with six AISA activists. Wangchuk ended his fast on Thursday night after the Centre’s outreach to him.</p>`
-      },
-      {
-        id: 7,
-        category: "Jammu & Kashmir",
-        time: "10:52 AM",
-        author: "PTI",
-        title: "Kargil Vijay Diwas: Intent of infiltrators hasn’t changed since 1999, says Rajnath in Dras",
-        summary: "Defence Minister pays tributes on 27th Kargil Vijay Diwas; says Indian Army is fully prepared for any challenge.",
-        body: `<p>Defence Minister Rajnath Singh has said the “intent of infiltrators” hasn’t changed since the 1999 Kargil conflict and the Indian Army is “fully prepared” for any challenge.</p>
-<p>In his address to Army personnel at a Shaurya Bhoj hosted in Dras on Saturday, he also said the government has laid special emphasis on modernisation of the armed forces, and the endeavour is that the military gets the latest equipment and the best of the training.</p>
-<p>Singh arrived in Dras on Saturday evening to attend Shaurya Sandhya, an event held at the Kargil War Memorial here as part of a two-day programme to mark the anniversary of Kargil Vijay Diwas.</p>
-<p>Kargil Vijay Diwas commemorates the culmination of Operation Vijay on July 26, 1999. The operation was started by the Army to regain Indian territories in Kargil district captured by Pakistani troops.</p>
-<blockquote>“We have to remember that even today challenges have not reduced; the intent of infiltrators hasn’t changed, and even today it adopts tools like a proxy war or infiltration,” he said in a veiled reference to Pakistan.</blockquote>
-<p>“I am fully assured that our Army is fully prepared for any such challenges,” Singh said.</p>
-<p>The defence minister said, this is “our century, the coming time is ours,” and given the emphasis on Aatmanirbharta, “I am assured that Indian armed forces will become the best in the world.”</p>
-<p>In his address, he also saluted the armed forces and the valour of the soldiers.</p>
-<blockquote>“Today we are breathing free and living with our heads held high, as our soldiers in Kargil, despite plummeting mercury and dipping oxygen levels, have not lowered their guard,” Singh said.</blockquote>
-<p>Singh said the pride he was feeling in Dras at this occasion cannot be expressed in words.</p>
-<p>He said he was confident that till Indian soldiers possess the invisible inner strength, and a sense of nationalistic sentiment, “no force of the world will dare to cast an evil eye on India.”</p>
-<p>“In the last few years, I have had the opportunity to see closely many of the traditions of the Army, and one that touches the heart the most is Bada Khana,” the minister said.</p>
-<p>This is so because it is the only occasion when a jawan and an officer sit together and have the same meal, depicting an excellent sense of teamwork, he said.</p>
-<blockquote>“Your ability to rise above the limitations found in society is your true strength. And this strength alone enables us to win wars like the Kargil one,” Singh said.</blockquote>`
-      },
-      {
-        id: 8,
-        category: "India",
-        time: "01:38 AM",
-        author: "Manikant Mishra",
-        title: "Women in the tent: CJP’s female members who stood their ground",
-        summary: "For 36 days, the protest tents at Jantar Mantar became classrooms, workplaces and a second home for many women who sustained the movement.",
-        body: `<p>For 36 days, the protest tents at Jantar Mantar became more than a site of political resistance. They served as classrooms, workplaces, kitchens, meeting rooms and, for many women, a second home. While public attention often focused on speeches, marches and clashes with the police, women within the camp quietly sustained much of the movement’s daily operations, decision-making and morale.</p>
-<p>Their roles extended far beyond participation. They coordinated volunteers, helped draft policy documents, managed logistics, comforted fellow protesters and remained at the site through long days and uncertain nights. Their accounts reveal a movement sustained not only by public demonstrations but also by emotional resilience, collective responsibility and a determination to be treated as equals.</p>
-<p>Among them was a young volunteer who had only recently completed her Class 12 examinations. What began as volunteering soon evolved into a position within the CJP’s core volunteer team.</p>
-<blockquote>“We know what is right and wrong, and who to stand with,” she said. “The whole idea behind the CJP protest was to ensure accountability, and I believed in that. That is why I came.”</blockquote>
-<p>She said her commitment deepened after the July 20 ‘Sansad Chalo’ march, when police dispersed protesters and the CJP continued demanding accountability despite mounting pressure.</p>
-<p>“What made me stay was seeing the organisation stand by its demands even after everything that happened. It is rare to find people who continue supporting you when so much pressure builds around them. The presence of women leaders in the camp also gave us a sense of comfort and belonging.”</p>
-<p>While the protest camp fostered solidarity, women also encountered subtle challenges. Prachi and Megha recalled that people, including fellow protesters and even members of the organisation, often tried to provide them with additional care simply because they were women.</p>
-<blockquote>“I know their intentions were good, but sometimes it made me feel as though I was being treated differently. I am no less capable than anyone else,” Megha admitted.</blockquote>
-<p>The two stressed that responsibilities within the camp were shared collectively. “It was our collective effort that kept the protest running,” Megha said.</p>
-<p>For many participants, support from home made it possible to remain at the protest site. Rasika said her family never objected to her joining the movement. “They always understood why it was happening. They believed the demand was justified, so they never stopped me.”</p>
-<p>Garima, another student participating in the protest, said the experience itself had become an unforgettable memory. “Being here is something I will never forget. This protest has taught the nation one important lesson: accountability.”</p>
-<p>Asked what they would say to young women hesitant about joining public movements, Megha, Prachi and Rasika responded in unison: “Everyone should participate, especially girls.”</p>
-<p>Women also occupied key leadership positions within the CJP. Ratna, one of the organisation’s spokespersons and a lawyer, said women were indispensable to the movement’s functioning.</p>
-<blockquote>“The participation of women was essential. No democratic movement can truly function without the participation of the half of the population that women represent.”</blockquote>
-<p>Vaishnavi Gaur, a policy expert and CJP spokesperson, said women regularly contributed to internal strategy meetings where key organisational decisions were discussed. “We held daily internal meetings in which women actively contributed to discussions, and those suggestions were always taken into account.”</p>
-<p>Looking back, CJP spokesperson and core leadership member Aafreen Nawaz said the movement’s legacy should recognise not only its demands but also the women who sustained it.</p>
-<blockquote>“History should remember us for what we stood for, and for what every woman who stepped into Jantar Mantar stood for. That must be remembered.”</blockquote>`
-      },
-      {
-        id: 9,
-        category: "Diaspora",
-        time: "09:48 AM",
-        author: "Mohit Khanna",
-        title: "‘He spoke briefly, then fired’: Punjabi woman shot dead in targeted Toronto attack",
-        summary: "26-year-old Navneet Kaur killed in Etobicoke; 37-year-old suspect from Brampton charged with first-degree murder.",
-        body: `<p>A 26-year-old woman of Punjabi origin was shot dead in Canada's Toronto by a 37-year-old man of Punjabi descent.</p>
-<p>The Toronto Police have identified a Brampton-based man who has been charged with first-degree murder after a woman was fatally shot during what the police term as a “targeted attack” in Etobicoke early Friday morning.</p>
-<p>The victim has been identified as Navneet Kaur (26) of Toronto. The suspect, Sharnjeet Singh (37), has also been charged with failing to comply with an undertaking.</p>
-<p>The relationship between the accused and the victim is not known yet.</p>
-<p>In a press statement, Toronto Police allege the victim and the suspect were engaged in a "brief interaction” when the suspect shot the woman. Emergency responders rushed to the scene after receiving reports of the shooting and administered life-saving measures. However, the victim was pronounced dead at the scene.</p>
-<p>According to the police, the suspect fled the scene before officers arrived but was later arrested following a search operation by officers of the Ontario Provincial Police.</p>
-<p>Sharnjeet was scheduled to appear before the Ontario Court of Justice in Toronto on Saturday morning.</p>
-<p>A witness, who was having coffee nearby, told he saw a man approach the woman and speak with her briefly before opening fire.</p>
-<blockquote>“He spoke briefly, then fired.”</blockquote>
-<p>The residents have raised safety concerns following the incident. Toronto Police are seeking additional information in this matter.</p>`
-      },
-      {
-        id: 10,
-        category: "World",
-        time: "10:45 AM",
-        author: "ANI",
-        title: "‘Not been an easy evening’: Trump jokes about awards honouring critical coverage of his administration",
-        summary: "US President opens White House Correspondents’ Dinner with a jab at journalism awards that recognised reporting critical of his team.",
-        body: `<p>US President Donald Trump on Friday (local time) started his speech at the rescheduled White House Correspondents’ Association (WHCA) Dinner by joking that it had “not been an easy evening” for him, referring to journalism awards presented for coverage critical of his administration.</p>
-<blockquote>“This has not been an easy evening -- all these awards. Do I have a say on those awards?” the US President said.</blockquote>
-<p>According to CNN, several journalists were honoured for their reporting on the Trump Administration, some of whom were critical of the nature of his administration in their coverage.</p>
-<p>CNN reported that its journalist Kaitlan Collins was recognised for her coverage of the Oval Office meeting between Trump and Ukrainian President Volodymyr Zelensky, with judges praising her reporting for its “depth of knowledge, access and context” during a meeting that “unravelled before the world’s eyes.”</p>
-<p>Meanwhile, The Associated Press reporters Aamer Madhani and Zeke Miller were honoured in the print category for their reporting on the dismissal of National Security Council staff whose views were considered not aligned with the President’s agenda.</p>
-<p>The evening also saw several Wall Street Journal reporters recognised for their reporting on an alleged letter that Trump reportedly wrote to Jeffrey Epstein for his 50th birthday. The report later became the subject of a lawsuit filed by Trump against the Journal’s parent company.</p>
-<p>As the award-winning report was described during the ceremony, Trump was seen smirking and repeatedly shrugging his shoulders before shaking hands with the journalists involved.</p>
-<p>The Correspondents’ Dinner was rescheduled after the original April event was abruptly called off following a major security incident at the Washington Hilton.</p>
-<p>A man identified as Cole Allen allegedly ran through a security checkpoint carrying loaded firearms and knives before being subdued by US Secret Service agents outside the ballroom. Authorities said Allen allegedly struck an officer before being restrained, while Trump and senior administration officials were rushed to safety after gunfire was heard outside the venue.</p>
-<p>Allen later pleaded not guilty to four federal charges, including attempting to assassinate a president and assaulting a law enforcement officer. He remains in custody.</p>`
-      },
-      {
-        id: 11,
-        category: "World",
-        time: "11:05 AM",
-        author: "AP",
-        title: "1 killed, 16 injured as van slams into crowd at Berlin’s Pride event",
-        summary: "Police identify suspect with ties to Islamic extremists; iconic pride celebrations called off after the attack in Tiergarten park.",
-        body: `<p>A van slammed into people gathered for Berlin’s famed LGBTQ+ event on Saturday night, killing one person, injuring at least 16 others and prompting police to call off the celebrations and a concert in the German capital hours after they had begun.</p>
-<p>Berlin police said they have identified a suspect who has not been arrested and he has ties to Islamic extremists in the German capital.</p>
-<blockquote>“The suspect is known to police. He is known to us as a member of Islamic circles here in Berlin, and our search for this person is proceeding at full speed,” said police spokesman Florian Nath.</blockquote>
-<p>Earlier, police said some of the victims had life-threatening injuries. In a post on X, police called on everyone to leave the site of the event immediately as ambulances and firefighters attended to the victims.</p>
-<p>According to police, a white van had driven into the Tiergarten park around 10 pm, which is next to the route that the pride march had passed along earlier, and hit several people before colliding with a tree.</p>
-<p>Overall, more than 2,200 police officers have been on duty in Berlin since Saturday morning to protect the pride parade and other LGBTQ+ events in the city.</p>
-<p>Berlin Mayor Kai Wegner expressed shock, saying that “following a peaceful and vibrant pride parade, the rally for a tolerant and peaceful Berlin was attacked in the most brutal manner.”</p>
-<blockquote>“This is an attack on our free and cosmopolitan society,” Wegner said.</blockquote>
-<p>Hundreds of thousands of people had come to Berlin on Saturday to celebrate at Berlin’s pride parade, known in Germany as Christopher Street Day. It’s one of Europe’s largest LGBTQ+ celebrations.</p>
-<p>The pride event in front of the city’s Brandenburg Gate, near Tiergarten, was called off around 10:15 pm and a band’s performance on stage was interrupted. People were urged to go home and to avoid taking the route through the park.</p>`
-      },
-      {
-        id: 12,
-        category: "Delhi",
-        time: "12:51 PM",
-        author: "PTI",
-        title: "Noida boy, 6, falls into water-filled pit while playing, drowns",
-        summary: "Police say contractor responsible for the boring work arrested after family files complaint.",
-        body: `<p>A six-year-old boy drowned after accidentally falling into a water-filled pit dug for boring work inside a residential colony in Greater Noida, police said on Sunday.</p>
-<p>The incident took place on Saturday evening in Kaladham Colony when the child was playing with other children near the pit at around 7 pm, police said.</p>
-<p>According to police, the boy accidentally fell into the water-filled pit and was pulled out by family members, who rushed him to a hospital. Doctors declared him dead on arrival.</p>
-<p>After completing the inquest proceedings, police sent the body for postmortem examination.</p>
-<p>Based on a complaint lodged by the victim’s family, a case has been registered and further legal proceedings have been initiated, police said.</p>
-<p>The contractor responsible for the boring work was arrested on Sunday in connection with the incident, they added.</p>`
-      }
+      {id:1,category:"Delhi",time:"10:03 AM",author:"ANI",title:"All Delhi Metro stations reopen after CJP calls off Jantar Mantar protest",summary:"DMRC says both entry and exit gates at all stations are now open for passengers after the youth-led agitation ended.",body:`<p>All stations of the Delhi Metro network were opened for passenger services on Sunday after the Cockroach Janata Party (CJP) called off its agitation at Jantar Mantar, ending days of security restrictions and staggered closures at 18 key central Delhi stations.</p><p>The Delhi Metro Rail Corporation (DMRC) said that both entry and exit gates at all stations are now open for passengers.</p><blockquote>“Service Update: All stations of the Delhi Metro network are open (both entry and exit) for passenger services,” DMRC said in a post on X.</blockquote><p>The decision follows days of security restrictions and staggered closures at key stations, including Rajiv Chowk, Central Secretariat, Mandi House, ITO and New Delhi, causing major disruptions for commuters during peak hours.</p><p>The closed stations included Lok Kalyan Marg, Rajiv Chowk, Patel Chowk, Ramakrishna Ashram Marg, Barakhambha Road, Supreme Court, Seva Teerth, Janpath, Mandi House, Central Secretariat, ITO, Delhi Gate, Indraprastha, Khan Market, Jor Bagh, Shivaji Stadium, Jhandewalan and New Delhi.</p><p>The restrictions were lifted after security personnel and law enforcement agencies cleared barriers at major central Delhi stations following an assessment of the situation after the official end of the sit-in at Jantar Mantar.</p><p>Meanwhile, internet services have also been restored at the Jantar Mantar protest site and neighbouring areas of Central Delhi after the CJP announced the withdrawal of its agitation.</p><p>The administration had imposed mobile internet restrictions in the area for several days as the youth-led protest over NEET-UG examination irregularities grew in numbers.</p><p>The CJP said it withdrew the agitation in “good faith” after receiving assurances from the government on its demands.</p><p>“Cockroach Janta Party declares that we withdraw the agitation in good faith, with the understanding that the agreed-upon terms will be executed within the agreed-upon timelines,” CJP Chief Spokesperson Saurav Das said.</p><p>The development came after Dharmendra Pradhan resigned from the Union Education Minister’s post following over a month-long protest, including the CJP’s agitation at Jantar Mantar and a 26-day hunger strike by activist Sonam Wangchuk.</p><p>The CJP said the Central government had agreed to provide suitable compensation to the families of NEET aspirants who died by suicide and assured the withdrawal of FIRs lodged against protesters across the country.</p><p>Union Minister JP Nadda said the government had considered and accepted the demands raised during talks on reforms in the examination system and other issues related to the protests.</p><p>Following Pradhan’s resignation, newly appointed Union Education Minister Prahlad Joshi said he would fulfil the responsibility with “complete humility and responsibility.”</p>`},
+      {id:2,category:"India",time:"11:15 AM",author:"ANI",title:"‘This is just the beginning’: CJP’s Abhijeet Dipke after 37-day protest over NEET-UG paper leak",summary:"CJP founder thanks supporters, says criticism made the movement stronger; vows to continue campaign for examination reforms.",body:`<p>Cockroach Janata Party (CJP) founder Abhijeet Dipke on Sunday thanked supporters across the country for backing its 37-day agitation, saying their support and trust made the “huge victory of the youth” possible.</p><p>In a video shared on X, Dipke said the prolonged agitation had been difficult for the entire team and thanked those who stood by the movement despite criticism and doubts.</p><blockquote>“It feels really good... finally, at last, I have been able to sleep peacefully and wake up in my bedroom without thinking about what to do next, or what will happen by this evening or not. There is no panic,” he said.</blockquote><p>“What we went through in the last 37 days was really, really difficult. It was not easy—not just for me, but for all of our team,” Dipke added.</p><p>He expressed gratitude to supporters of the CJP across India, saying, “All the people who supported us, who showed trust in us, and who loved us when everybody was doubting us—I really want to thank you all from the bottom of my heart. Without your support, this wouldn't have been possible.”</p><p>Dipke also apologised for not being able to meet everyone who remained at Jantar Mantar after the protest was called off, citing his health condition.</p><p>“I also really want to apologise; I couldn't meet all the people who were still waiting at Jantar Mantar yesterday to say thank you to them because, as you know, I have typhoid and I had developed a very high fever—my temperature had reached 101. That is why I had to come home,” he said.</p><p>Thanking those who stayed at the protest site for 37 days, Dipke said their efforts were significant for the country.</p><p>“I really, really, really appreciate what you did for this country. And I really, really love you all. Without you guys, we wouldn't have been able to achieve this. Salute to you all,” he said.</p><p>The CJP founder also thanked those who had criticised or questioned the movement, saying the criticism helped it improve.</p><blockquote>“If you hadn't criticised us, if you hadn't questioned us, we perhaps wouldn't have had the chance to improve ourselves. It's because of your criticism, it's because of your legitimate questions, that we were able to improve ourselves, and I think that's why we were able to deliver as well,” Dipke said.</blockquote><p>He further said the outfit would continue its journey, asserting that the end of the agitation was only the beginning.</p><p>“As I said, and as I have been saying since day one: this is just a beginning. The Cockroach Janta Party has a long way to go, and for sure, we will go a long way. This is just a beginning,” he said.</p><p>The 37-day-long agitation culminated with the resignation of Union Education Minister Dharmendra Pradhan on Saturday amid nationwide protests over the NEET-UG 2026 paper leak. The CJP subsequently withdrew its protest from Jantar Mantar after receiving assurances from the government on its demands.</p><p>Union Ministers J P Nadda and Jitendra Singh held talks with the CJP and accepted its demand for suitable compensation to the families of NEET aspirants who died by suicide and assured the withdrawal of FIRs lodged against protesters across the country.</p><p>The government also agreed to examine the outfit's five-point charter on examination reforms, with the next round of talks scheduled after four weeks.</p>`},
+      {id:3,category:"India",time:"12:29 PM",author:"PTI",title:"Prahlad Joshi takes charge as Education Minister",summary:"Joshi was appointed Education Minister after Dharmendra Pradhan resigned from the post on Saturday.",body:`<p>Newly appointed Union Education Minister Prahlad Joshi has taken charge, officials said on Sunday.</p><p>Joshi was appointed Education Minister after Dharmendra Pradhan resigned from the post on Saturday.</p><p>Joshi has been given additional charge of the Education Ministry besides his role as the Consumer Affairs Minister.</p><p>Pradhan resigned from his post on Saturday following the Cockroach Janta Party-led student protests across the country, demanding his ouster over the NEET paper leak controversy.</p><p>In his resignation letter, Pradhan said it was not a matter of “individual prestige” for him, and that he was disturbed to see the series of events that unfolded over the last 10 days.</p>`},
+      {id:4,category:"Top Headlines",time:"11:20 AM",author:"Aditi Tandon",title:"Slipping narrative, swelling protests did Pradhan in",summary:"NEET protest pressure forces BJP's first major ministerial sacrifice amid public agitation.",body:`<p>It’s not routine for a member of the BJP’s largely silent Margdarshak Mandal to speak, let alone publicly. So when Murli Manohar Joshi, 92, took to X on Thursday to flag the imperatives of engagement with the Jantar Mantar protesters or risk alienating them from the goal of Viksit Bharat, his remarks were anything but routine.</p><p>They were seen as well-timed and calibrated. Sections within the Sangh Parivar even believed Joshi’s X post had Prime Minister Narendra Modi’s backing and that heads might finally roll.</p><p>And today, a head did roll. Thirty-six days after the Cockroach Janta Party (CJP)-led movement persisted with its demand for the resignation of Education Minister Dharmendra Pradhan over the 2026 NEET-UG paper leak, he put in his papers, citing the need to keep “anti-India forces at bay” and protect the future of India’s youth.</p><p>The development was seen in political circles as PM Modi’s capitulation in the face of growing protests. The reason: this is the first time in eight years that an NDA minister has stepped down amid sustained public pressure. The last and only NDA minister to resign was MJ Akbar in 2018. But Akbar was a Minister of State and a political lightweight, unlike Pradhan, a Cabinet minister and a key member of Home Minister Amit Shah’s election strategy and management team.</p><p>Pradhan was credited with the BJP’s hat-trick in Haryana in 2024 and with ending the Naveen Patnaik-led BJD’s 24-year rule in Odisha the same year. He later oversaw the BJP’s victory in the 2025 Bihar Assembly elections, having earlier steered the party to wins in Uttar Pradesh (2022), Uttarakhand (2017) and Jharkhand (2014).</p><p>His value to the party was clearly too significant to ignore. That explains the BJP’s abiding insistence on retaining him until, of course, things changed on July 20, when the ruling party as well as the security establishment were jolted by the scale of the CJP’s “Chalo Sansad” call.</p><p>That was the day the government first woke up to the movement’s potential to spread beyond Delhi and beyond the call for Pradhan’s ouster. Farmer leaders had already begun expressing solidarity, and support was growing by the day. The BJP’s internal assessment was that while the year-long farmers’ agitation was mostly powered by Punjab, the CJP-led protests were drawing participation from across the country.</p><p>The swelling protests also signalled a loss of grip on the political narrative — a reason why PM Modi resorted to two rare selfie videos on Instagram, where Gen Z had mobilised around the CJP movement. NDA allies also nudged the government to act with even elements within the right wing flagging on social media that the government’s response was already late, and that time, which was of essence in the agitation at hand, had already been lost.</p><p>A growing protest, a slipping narrative and the imperative of running a strained Parliament with the focus on legislative agenda, including the new anti-paper leak law listed on Monday, together formed the mix of factors that eventually led to Pradhan’s ouster today.</p><p>Within the BJP, too, there was growing unease, with some leaders harking back to delayed response during the farmers’ agitation, when the farm laws were repealed only after prolonged protests. Sources said the lessons from the farmers’ protests were also weighing on the party leadership as the CJP agitation gathered momentum and spread further.</p><blockquote>“There was a growing realisation that Pradhan’s resignation was key to the collective government goal of dousing the CJP protests before anti-national forces infiltrated the agitation for political ends and to derail the government’s reform agenda. The protest script does bear uncanny similarities to what India’s neighbourhood saw in recent times in the shape of regime changes. Our government deemed it fit to retreat so that democracy could advance. The fact that the CJP has ended its protest shows that, ultimately, Indian democracy won,” a BJP insider said.</blockquote><p>Sources said Rahul Gandhi’s continued “fanning of CJP protests” and the Congress’ insistence on not letting Parliament run until Pradhan was removed also weighed on the government’s mind before the final decision.</p><p>The broad assessment in the party however is that the ultimate aim behind letting Pradhan go was to “thwart anti-India forces from exploiting the CJP protests to disturb peace amid intel on potential security risks.”</p><p>All that said, PM Modi ultimately appears to have buckled in order to pacify the youth, whom he has always described as one of the four pillars of the goal of Viksit Bharat by 2047, alongside farmers, women and the poor.</p>`},
+      {id:5,category:"India",time:"01:29 AM",author:"Surya S Pillai",title:"Melody toffees, roses, tears: Jantar Mantar erupts",summary:"Gen Z protesters broke into impromptu dances on popular Bollywood songs as soon as the announcement of Dharmendra Pradhan's resignation was made.",body:`<p>Gen Z protesters broke into impromptu dances on popular Bollywood songs as soon as the announcement of Dharmendra Pradhan's resignation was made. Anyone visiting the site was welcomed with Melody toffees, the confectionery that made headlines after the portmanteau “Melodi”, reflecting Prime Minister Narendra Modi’s camaraderie with Italian Prime Minister Giorgia Meloni, became a viral trend, particularly after Modi gifted a packet of Melody to his Italian counterpart.</p><blockquote>“We were harassed, beaten by the Delhi Police, called ‘anti-national’, and shamed by the godi media. But this day is the culmination of our struggle and determination. We were sure we would not budge until that man resigned,” said Riya Kapoor, a medical student.</blockquote><p>Young men and women hugged one another, wiped away tears and once again proudly displayed their innovative and cheeky placards. They will remember the friendships forged at the site, the food shared and, of course, their collective resistance to alleged police brutality.</p><p>A tight ring of police security and deployment of RAF personnel around the historic protest site did not deter the students from celebrating their win. Some of them also offered Melody toffees and roses to the security personnel who a few week ago brutally beat them up.</p><blockquote>"My happiness knows no bounds. I came here from Lucknow, slept at metro stations and the protest site. Today, I feel the sacrifice paid off. I am proud to bring an incompetent government to its knees," Mayank Sharma said.</blockquote><p>Gen Z were back with their selfie sticks, taking photographs of themselves and their friends.</p><p>"I will post the pictures when I get back home. I will flash a proud smile when I will meet my parents," a protester said.</p><p>So is the crowd going back?</p><p>"Some of them are going back, some are yet to decide on their next step. But today is the day to celebrate. Finally, I will get a good night's sleep," Manish said.</p>`},
+      {id:6,category:"India",time:"12:22 PM",author:"PTI",title:"CJP protest: Rahul writes to Amit Shah, demands accountability for ‘barbaric’ assault on students",summary:"Leader of Opposition demands answers over use of lethal force, including pellet guns, against peacefully protesting students.",body:`<p>Leader of Opposition in the Lok Sabha Rahul Gandhi has written to Home Minister Amit Shah, demanding accountability for the “barbaric assault” on peacefully protesting students here and asking whether he approved the use of “lethal force”, including pellet guns, against the youth.</p><p>In his letter to Shah, Gandhi said peaceful protest is crucial to any democracy and it is the government’s responsibility to protect protesters and resolve their grievances through dialogue.</p><blockquote>“Such brutal violence destroys every norm, and has outraged the country. Youth and students, the future of our country, are demanding answers and accountability. Their voice will be heard,” the former Congress chief said.</blockquote><p>“I write to demand accountability for the barbaric assault on students who were peacefully protesting in Delhi on July 20, 2026. Our students were demanding a fair and accountable education system. Instead of being heard, security forces assaulted them with indiscriminate force, including lethal weapons and tear gas,” Gandhi said in his letter dated July 25.</p><p>“Hundreds have suffered serious injuries and women students have been assaulted by policemen, including by deliberately targeting their private parts,” he said.</p><p>Gandhi said most shocking has been the use of lethal pellet guns.</p><blockquote>“Reports in the media and social media clearly show people who have suffered grave injuries including a journalist. I met 19-year old student Sahil Lochab, who is now in severe pain and is likely to lose an eye because he was shot with pellet guns,” he said.</blockquote><p>“Security forces deployed in Delhi answer ultimately to you, so I ask: As Home Minister, did you approve the use of lethal force, including pellet guns against students? If not, who did?” Gandhi said.</p><p>“Are the people in plain clothes seen beating students with lathis police personnel or volunteers? Who authorised their deployment?” Gandhi further questioned.</p><p>“Peaceful protest is crucial to any democracy. It is the government’s responsibility to protect protesters and resolve their grievances through dialogue. Such brutal violence destroys every norm, and has outraged the country.”</p><p>The protests were spearheaded by the CJP, a platform launched by Abhijeet Dipke as a satirical online campaign in May before it evolved into a nationwide youth movement centred on demands for accountability over the NEET paper leak.</p><p>The agitation began at Jantar Mantar on June 20 but acquired national momentum after activist Sonam Wangchuk joined it on June 28 and undertook an indefinite fast with six AISA activists. Wangchuk ended his fast on Thursday night after the Centre’s outreach to him.</p>`},
+      {id:7,category:"Jammu & Kashmir",time:"10:52 AM",author:"PTI",title:"Kargil Vijay Diwas: Intent of infiltrators hasn’t changed since 1999, says Rajnath in Dras",summary:"Defence Minister pays tributes on 27th Kargil Vijay Diwas; says Indian Army is fully prepared for any challenge.",body:`<p>Defence Minister Rajnath Singh has said the “intent of infiltrators” hasn’t changed since the 1999 Kargil conflict and the Indian Army is “fully prepared” for any challenge.</p><p>In his address to Army personnel at a Shaurya Bhoj hosted in Dras on Saturday, he also said the government has laid special emphasis on modernisation of the armed forces, and the endeavour is that the military gets the latest equipment and the best of the training.</p><p>Singh arrived in Dras on Saturday evening to attend Shaurya Sandhya, an event held at the Kargil War Memorial here as part of a two-day programme to mark the anniversary of Kargil Vijay Diwas.</p><p>Kargil Vijay Diwas commemorates the culmination of Operation Vijay on July 26, 1999. The operation was started by the Army to regain Indian territories in Kargil district captured by Pakistani troops.</p><blockquote>“We have to remember that even today challenges have not reduced; the intent of infiltrators hasn’t changed, and even today it adopts tools like a proxy war or infiltration,” he said in a veiled reference to Pakistan.</blockquote><p>“I am fully assured that our Army is fully prepared for any such challenges,” Singh said.</p><p>The defence minister said, this is “our century, the coming time is ours,” and given the emphasis on Aatmanirbharta, “I am assured that Indian armed forces will become the best in the world.”</p><p>In his address, he also saluted the armed forces and the valour of the soldiers.</p><blockquote>“Today we are breathing free and living with our heads held high, as our soldiers in Kargil, despite plummeting mercury and dipping oxygen levels, have not lowered their guard,” Singh said.</blockquote><p>Singh said the pride he was feeling in Dras at this occasion cannot be expressed in words.</p><p>He said he was confident that till Indian soldiers possess the invisible inner strength, and a sense of nationalistic sentiment, “no force of the world will dare to cast an evil eye on India.”</p><p>“In the last few years, I have had the opportunity to see closely many of the traditions of the Army, and one that touches the heart the most is Bada Khana,” the minister said.</p><p>This is so because it is the only occasion when a jawan and an officer sit together and have the same meal, depicting an excellent sense of teamwork, he said.</p><blockquote>“Your ability to rise above the limitations found in society is your true strength. And this strength alone enables us to win wars like the Kargil one,” Singh said.</blockquote>`},
+      {id:8,category:"India",time:"01:38 AM",author:"Manikant Mishra",title:"Women in the tent: CJP’s female members who stood their ground",summary:"For 36 days, the protest tents at Jantar Mantar became classrooms, workplaces and a second home for many women who sustained the movement.",body:`<p>For 36 days, the protest tents at Jantar Mantar became more than a site of political resistance. They served as classrooms, workplaces, kitchens, meeting rooms and, for many women, a second home. While public attention often focused on speeches, marches and clashes with the police, women within the camp quietly sustained much of the movement’s daily operations, decision-making and morale.</p><p>Their roles extended far beyond participation. They coordinated volunteers, helped draft policy documents, managed logistics, comforted fellow protesters and remained at the site through long days and uncertain nights. Their accounts reveal a movement sustained not only by public demonstrations but also by emotional resilience, collective responsibility and a determination to be treated as equals.</p><p>Among them was a young volunteer who had only recently completed her Class 12 examinations. What began as volunteering soon evolved into a position within the CJP’s core volunteer team.</p><blockquote>“We know what is right and wrong, and who to stand with,” she said. “The whole idea behind the CJP protest was to ensure accountability, and I believed in that. That is why I came.”</blockquote><p>She said her commitment deepened after the July 20 ‘Sansad Chalo’ march, when police dispersed protesters and the CJP continued demanding accountability despite mounting pressure.</p><p>“What made me stay was seeing the organisation stand by its demands even after everything that happened. It is rare to find people who continue supporting you when so much pressure builds around them. The presence of women leaders in the camp also gave us a sense of comfort and belonging.”</p><p>While the protest camp fostered solidarity, women also encountered subtle challenges. Prachi and Megha recalled that people, including fellow protesters and even members of the organisation, often tried to provide them with additional care simply because they were women.</p><blockquote>“I know their intentions were good, but sometimes it made me feel as though I was being treated differently. I am no less capable than anyone else,” Megha admitted.</blockquote><p>The two stressed that responsibilities within the camp were shared collectively. “It was our collective effort that kept the protest running,” Megha said.</p><p>For many participants, support from home made it possible to remain at the protest site. Rasika said her family never objected to her joining the movement. “They always understood why it was happening. They believed the demand was justified, so they never stopped me.”</p><p>Garima, another student participating in the protest, said the experience itself had become an unforgettable memory. “Being here is something I will never forget. This protest has taught the nation one important lesson: accountability.”</p><p>Asked what they would say to young women hesitant about joining public movements, Megha, Prachi and Rasika responded in unison: “Everyone should participate, especially girls.”</p><p>Women also occupied key leadership positions within the CJP. Ratna, one of the organisation’s spokespersons and a lawyer, said women were indispensable to the movement’s functioning.</p><blockquote>“The participation of women was essential. No democratic movement can truly function without the participation of the half of the population that women represent.”</blockquote><p>Vaishnavi Gaur, a policy expert and CJP spokesperson, said women regularly contributed to internal strategy meetings where key organisational decisions were discussed. “We held daily internal meetings in which women actively contributed to discussions, and those suggestions were always taken into account.”</p><p>Looking back, CJP spokesperson and core leadership member Aafreen Nawaz said the movement’s legacy should recognise not only its demands but also the women who sustained it.</p><blockquote>“History should remember us for what we stood for, and for what every woman who stepped into Jantar Mantar stood for. That must be remembered.”</blockquote>`},
+      {id:9,category:"Diaspora",time:"09:48 AM",author:"Mohit Khanna",title:"‘He spoke briefly, then fired’: Punjabi woman shot dead in targeted Toronto attack",summary:"26-year-old Navneet Kaur killed in Etobicoke; 37-year-old suspect from Brampton charged with first-degree murder.",body:`<p>A 26-year-old woman of Punjabi origin was shot dead in Canada's Toronto by a 37-year-old man of Punjabi descent.</p><p>The Toronto Police have identified a Brampton-based man who has been charged with first-degree murder after a woman was fatally shot during what the police term as a “targeted attack” in Etobicoke early Friday morning.</p><p>The victim has been identified as Navneet Kaur (26) of Toronto. The suspect, Sharnjeet Singh (37), has also been charged with failing to comply with an undertaking.</p><p>The relationship between the accused and the victim is not known yet.</p><p>In a press statement, Toronto Police allege the victim and the suspect were engaged in a "brief interaction” when the suspect shot the woman. Emergency responders rushed to the scene after receiving reports of the shooting and administered life-saving measures. However, the victim was pronounced dead at the scene.</p><p>According to the police, the suspect fled the scene before officers arrived but was later arrested following a search operation by officers of the Ontario Provincial Police.</p><p>Sharnjeet was scheduled to appear before the Ontario Court of Justice in Toronto on Saturday morning.</p><p>A witness, who was having coffee nearby, told he saw a man approach the woman and speak with her briefly before opening fire.</p><blockquote>“He spoke briefly, then fired.”</blockquote><p>The residents have raised safety concerns following the incident. Toronto Police are seeking additional information in this matter.</p>`},
+      {id:10,category:"World",time:"10:45 AM",author:"ANI",title:"‘Not been an easy evening’: Trump jokes about awards honouring critical coverage of his administration",summary:"US President opens White House Correspondents’ Dinner with a jab at journalism awards that recognised reporting critical of his team.",body:`<p>US President Donald Trump on Friday (local time) started his speech at the rescheduled White House Correspondents’ Association (WHCA) Dinner by joking that it had “not been an easy evening” for him, referring to journalism awards presented for coverage critical of his administration.</p><blockquote>“This has not been an easy evening -- all these awards. Do I have a say on those awards?” the US President said.</blockquote><p>According to CNN, several journalists were honoured for their reporting on the Trump Administration, some of whom were critical of the nature of his administration in their coverage.</p><p>CNN reported that its journalist Kaitlan Collins was recognised for her coverage of the Oval Office meeting between Trump and Ukrainian President Volodymyr Zelensky, with judges praising her reporting for its “depth of knowledge, access and context” during a meeting that “unravelled before the world’s eyes.”</p><p>Meanwhile, The Associated Press reporters Aamer Madhani and Zeke Miller were honoured in the print category for their reporting on the dismissal of National Security Council staff whose views were considered not aligned with the President’s agenda.</p><p>The evening also saw several Wall Street Journal reporters recognised for their reporting on an alleged letter that Trump reportedly wrote to Jeffrey Epstein for his 50th birthday. The report later became the subject of a lawsuit filed by Trump against the Journal’s parent company.</p><p>As the award-winning report was described during the ceremony, Trump was seen smirking and repeatedly shrugging his shoulders before shaking hands with the journalists involved.</p><p>The Correspondents’ Dinner was rescheduled after the original April event was abruptly called off following a major security incident at the Washington Hilton.</p><p>A man identified as Cole Allen allegedly ran through a security checkpoint carrying loaded firearms and knives before being subdued by US Secret Service agents outside the ballroom. Authorities said Allen allegedly struck an officer before being restrained, while Trump and senior administration officials were rushed to safety after gunfire was heard outside the venue.</p><p>Allen later pleaded not guilty to four federal charges, including attempting to assassinate a president and assaulting a law enforcement officer. He remains in custody.</p>`},
+      {id:11,category:"World",time:"11:05 AM",author:"AP",title:"1 killed, 16 injured as van slams into crowd at Berlin’s Pride event",summary:"Police identify suspect with ties to Islamic extremists; iconic pride celebrations called off after the attack in Tiergarten park.",body:`<p>A van slammed into people gathered for Berlin’s famed LGBTQ+ event on Saturday night, killing one person, injuring at least 16 others and prompting police to call off the celebrations and a concert in the German capital hours after they had begun.</p><p>Berlin police said they have identified a suspect who has not been arrested and he has ties to Islamic extremists in the German capital.</p><blockquote>“The suspect is known to police. He is known to us as a member of Islamic circles here in Berlin, and our search for this person is proceeding at full speed,” said police spokesman Florian Nath.</blockquote><p>Earlier, police said some of the victims had life-threatening injuries. In a post on X, police called on everyone to leave the site of the event immediately as ambulances and firefighters attended to the victims.</p><p>According to police, a white van had driven into the Tiergarten park around 10 pm, which is next to the route that the pride march had passed along earlier, and hit several people before colliding with a tree.</p><p>Overall, more than 2,200 police officers have been on duty in Berlin since Saturday morning to protect the pride parade and other LGBTQ+ events in the city.</p><p>Berlin Mayor Kai Wegner expressed shock, saying that “following a peaceful and vibrant pride parade, the rally for a tolerant and peaceful Berlin was attacked in the most brutal manner.”</p><blockquote>“This is an attack on our free and cosmopolitan society,” Wegner said.</blockquote><p>Hundreds of thousands of people had come to Berlin on Saturday to celebrate at Berlin’s pride parade, known in Germany as Christopher Street Day. It’s one of Europe’s largest LGBTQ+ celebrations.</p><p>The pride event in front of the city’s Brandenburg Gate, near Tiergarten, was called off around 10:15 pm and a band’s performance on stage was interrupted. People were urged to go home and to avoid taking the route through the park.</p>`},
+      {id:12,category:"Delhi",time:"12:51 PM",author:"PTI",title:"Noida boy, 6, falls into water-filled pit while playing, drowns",summary:"Police say contractor responsible for the boring work arrested after family files complaint.",body:`<p>A six-year-old boy drowned after accidentally falling into a water-filled pit dug for boring work inside a residential colony in Greater Noida, police said on Sunday.</p><p>The incident took place on Saturday evening in Kaladham Colony when the child was playing with other children near the pit at around 7 pm, police said.</p><p>According to police, the boy accidentally fell into the water-filled pit and was pulled out by family members, who rushed him to a hospital. Doctors declared him dead on arrival.</p><p>After completing the inquest proceedings, police sent the body for postmortem examination.</p><p>Based on a complaint lodged by the victim’s family, a case has been registered and further legal proceedings have been initiated, police said.</p><p>The contractor responsible for the boring work was arrested on Sunday in connection with the incident, they added.</p>`}
     ];
 
-    // ========== APP LOGIC ==========
-    let currentFontSize = 17;
+    // ========== STATE ==========
+    const defaults = { theme: 'light', fontSize: 17, font: 'sans', spacing: 1.75 };
+    let settings = { ...defaults };
+    try {
+      const saved = JSON.parse(localStorage.getItem('tribuneReaderSettings') || '{}');
+      settings = { ...defaults, ...saved };
+    } catch(e) {}
+
+    let vocabulary = [];
+    try {
+      vocabulary = JSON.parse(localStorage.getItem('tribuneVocabulary') || '[]');
+    } catch(e) {}
+
+    let currentDictWord = null;
+
+    // ========== ELEMENTS ==========
     const homeView = document.getElementById('homeView');
     const articleView = document.getElementById('articleView');
+    const vocabView = document.getElementById('vocabView');
     const articleList = document.getElementById('articleList');
     const readerControls = document.getElementById('readerControls');
     const toast = document.getElementById('toast');
     const modal = document.getElementById('modal');
+    const settingsOverlay = document.getElementById('settingsOverlay');
+    const progressBar = document.getElementById('progressBar');
+    const dictPopup = document.getElementById('dictPopup');
+    const vocabBadge = document.getElementById('vocabBadge');
 
-    // Render article cards
+    // ========== SETTINGS ==========
+    function applySettings() {
+      document.documentElement.setAttribute('data-theme', settings.theme === 'light' ? '' : settings.theme);
+      document.documentElement.style.setProperty('--font-size', settings.fontSize + 'px');
+      document.getElementById('sizeDisplay').textContent = settings.fontSize + ' px';
+
+      const fonts = {
+        sans: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+        serif: "'Source Serif 4', Georgia, 'Times New Roman', serif",
+        classic: "Georgia, 'Times New Roman', serif"
+      };
+      document.documentElement.style.setProperty('--body-font', fonts[settings.font] || fonts.sans);
+      document.documentElement.style.setProperty('--line-height', settings.spacing);
+
+      document.querySelectorAll('#themeControl .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === settings.theme));
+      document.querySelectorAll('#fontControl .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.font === settings.font));
+      document.querySelectorAll('#spacingControl .seg-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.spacing) === settings.spacing));
+
+      const preview = document.getElementById('previewBox');
+      if (preview) {
+        preview.style.fontSize = settings.fontSize + 'px';
+        preview.style.lineHeight = settings.spacing;
+        preview.style.fontFamily = fonts[settings.font];
+      }
+      localStorage.setItem('tribuneReaderSettings', JSON.stringify(settings));
+    }
+
+    // ========== VOCABULARY ==========
+    function saveVocabulary() {
+      localStorage.setItem('tribuneVocabulary', JSON.stringify(vocabulary));
+      updateVocabBadge();
+    }
+
+    function updateVocabBadge() {
+      if (vocabulary.length > 0) {
+        vocabBadge.style.display = 'grid';
+        vocabBadge.textContent = vocabulary.length > 99 ? '99+' : vocabulary.length;
+      } else {
+        vocabBadge.style.display = 'none';
+      }
+    }
+
+    function renderVocabulary(filter = '') {
+      const list = document.getElementById('vocabList');
+      const empty = document.getElementById('vocabEmpty');
+      const countEl = document.getElementById('vocabCount');
+
+      let filtered = vocabulary;
+      if (filter) {
+        const q = filter.toLowerCase();
+        filtered = vocabulary.filter(v => v.word.toLowerCase().includes(q) || (v.meaning && v.meaning.toLowerCase().includes(q)));
+      }
+
+      countEl.textContent = vocabulary.length + (vocabulary.length === 1 ? ' word saved' : ' words saved');
+
+      if (filtered.length === 0) {
+        list.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+
+      list.innerHTML = filtered.map((v, i) => `
+        <div class="vocab-card">
+          <div>
+            <div class="vocab-word">${v.word}</div>
+            <div class="vocab-meaning">${v.meaning || 'No definition'}</div>
+            <div class="vocab-date">${v.phonetic ? v.phonetic + ' · ' : ''}${new Date(v.date).toLocaleDateString()}</div>
+          </div>
+          <button class="vocab-delete" data-word="${v.word}" title="Remove">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.vocab-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+          vocabulary = vocabulary.filter(v => v.word !== btn.dataset.word);
+          saveVocabulary();
+          renderVocabulary(document.getElementById('vocabSearch').value);
+          showToast('Word removed');
+        });
+      });
+    }
+
+    // ========== DICTIONARY ==========
+    async function lookupWord(word) {
+      word = word.trim().toLowerCase().replace(/[^a-z'-]/gi, '');
+      if (!word || word.length < 2) return;
+
+      currentDictWord = { word };
+      dictPopup.classList.add('show');
+      document.getElementById('dictLoading').style.display = 'block';
+      document.getElementById('dictContent').style.display = 'none';
+
+      // Position near top of viewport for simplicity on mobile
+      dictPopup.style.left = '50%';
+      dictPopup.style.top = '30%';
+      dictPopup.style.transform = 'translateX(-50%)';
+
+      try {
+        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+        if (!res.ok) throw new Error('Not found');
+        const data = await res.json();
+        const entry = data[0];
+        const phonetic = entry.phonetic || (entry.phonetics && entry.phonetics.find(p => p.text)?.text) || '';
+        let meaning = '';
+        if (entry.meanings && entry.meanings.length) {
+          const first = entry.meanings[0];
+          meaning = first.definitions[0]?.definition || '';
+          if (first.partOfSpeech) meaning = `(${first.partOfSpeech}) ${meaning}`;
+        }
+
+        currentDictWord = { word: entry.word || word, phonetic, meaning };
+        document.getElementById('dictWord').textContent = currentDictWord.word;
+        document.getElementById('dictPhonetic').textContent = phonetic;
+        document.getElementById('dictMeaning').textContent = meaning || 'No definition found.';
+        document.getElementById('dictLoading').style.display = 'none';
+        document.getElementById('dictContent').style.display = 'block';
+      } catch (err) {
+        currentDictWord = { word, phonetic: '', meaning: 'Definition not found. Check spelling or try again later.' };
+        document.getElementById('dictWord').textContent = word;
+        document.getElementById('dictPhonetic').textContent = '';
+        document.getElementById('dictMeaning').textContent = currentDictWord.meaning;
+        document.getElementById('dictLoading').style.display = 'none';
+        document.getElementById('dictContent').style.display = 'block';
+      }
+    }
+
+    function closeDict() {
+      dictPopup.classList.remove('show');
+      currentDictWord = null;
+      window.getSelection().removeAllRanges();
+    }
+
+    function saveCurrentWord() {
+      if (!currentDictWord || !currentDictWord.word) return;
+      const exists = vocabulary.find(v => v.word.toLowerCase() === currentDictWord.word.toLowerCase());
+      if (exists) {
+        showToast('Already in your vocabulary');
+        closeDict();
+        return;
+      }
+      vocabulary.unshift({
+        word: currentDictWord.word,
+        phonetic: currentDictWord.phonetic || '',
+        meaning: currentDictWord.meaning || '',
+        date: Date.now()
+      });
+      saveVocabulary();
+      showToast(`“${currentDictWord.word}” saved`);
+      closeDict();
+    }
+
+    // Word selection / long-press handling
+    let touchTimer = null;
+    const artBody = document.getElementById('artBody');
+
+    artBody.addEventListener('mouseup', () => {
+      const sel = window.getSelection();
+      if (sel && sel.toString().trim()) {
+        const word = sel.toString().trim().split(/\s+/)[0];
+        if (word.length > 1) lookupWord(word);
+      }
+    });
+
+    artBody.addEventListener('touchend', (e) => {
+      // small delay to allow selection
+      setTimeout(() => {
+        const sel = window.getSelection();
+        if (sel && sel.toString().trim()) {
+          const word = sel.toString().trim().split(/\s+/)[0];
+          if (word.length > 1) lookupWord(word);
+        }
+      }, 50);
+    });
+
+    // ========== NAVIGATION ==========
+    function showView(view) {
+      [homeView, articleView, vocabView].forEach(v => v.classList.remove('active'));
+      view.classList.add('active');
+      readerControls.classList.toggle('show', view === articleView);
+      progressBar.style.width = '0%';
+      window.scrollTo(0, 0);
+      if (view === vocabView) renderVocabulary();
+    }
+
+    function openArticle(id) {
+      const a = articles.find(x => x.id === id);
+      if (!a) return;
+      document.getElementById('artCategory').textContent = a.category;
+      document.getElementById('artTitle').textContent = a.title;
+      document.getElementById('artAuthor').textContent = a.author ? `By ${a.author}` : '';
+      document.getElementById('artTime').textContent = a.time;
+      document.getElementById('artBody').innerHTML = a.body;
+      showView(articleView);
+      updateProgress();
+    }
+
     function renderList() {
       articleList.innerHTML = articles.map(a => `
         <article class="article-card" data-id="${a.id}" role="button" tabindex="0">
@@ -801,96 +1204,67 @@
           <p class="card-summary">${a.summary}</p>
         </article>
       `).join('');
-
       document.querySelectorAll('.article-card').forEach(card => {
         card.addEventListener('click', () => openArticle(+card.dataset.id));
-        card.addEventListener('keydown', e => {
-          if (e.key === 'Enter' || e.key === ' ') openArticle(+card.dataset.id);
-        });
       });
     }
 
-    function openArticle(id) {
-      const a = articles.find(x => x.id === id);
-      if (!a) return;
-
-      document.getElementById('artCategory').textContent = a.category;
-      document.getElementById('artTitle').textContent = a.title;
-      document.getElementById('artAuthor').textContent = a.author ? `By ${a.author}` : '';
-      document.getElementById('artTime').textContent = a.time;
-      document.getElementById('artBody').innerHTML = a.body;
-      document.getElementById('artBody').style.fontSize = currentFontSize + 'px';
-
-      homeView.classList.remove('active');
-      articleView.classList.add('active');
-      readerControls.style.display = 'flex';
-      window.scrollTo(0, 0);
+    function updateProgress() {
+      if (!articleView.classList.contains('active')) return;
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      progressBar.style.width = (docHeight > 0 ? Math.min(100, (scrollTop / docHeight) * 100) : 0) + '%';
     }
+    window.addEventListener('scroll', updateProgress, { passive: true });
 
-    function goHome() {
-      articleView.classList.remove('active');
-      homeView.classList.add('active');
-      readerControls.style.display = 'none';
-      window.scrollTo(0, 0);
-    }
+    // ========== EVENT LISTENERS ==========
+    document.getElementById('backBtn').addEventListener('click', () => showView(homeView));
+    document.getElementById('vocabBtn').addEventListener('click', () => showView(vocabView));
+    document.getElementById('settingsBtn').addEventListener('click', () => settingsOverlay.classList.add('show'));
+    document.getElementById('openSettings').addEventListener('click', () => settingsOverlay.classList.add('show'));
+    document.getElementById('closeSettings').addEventListener('click', () => settingsOverlay.classList.remove('show'));
+    settingsOverlay.addEventListener('click', e => { if (e.target === settingsOverlay) settingsOverlay.classList.remove('show'); });
 
-    // Theme
-    const themeToggle = document.getElementById('themeToggle');
-    themeToggle.addEventListener('click', () => {
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
-      localStorage.setItem('theme', isDark ? 'light' : 'dark');
-    });
-    if (localStorage.getItem('theme') === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-
-    // Font size
-    document.getElementById('fontUp').addEventListener('click', () => {
-      currentFontSize = Math.min(22, currentFontSize + 1);
-      document.getElementById('artBody').style.fontSize = currentFontSize + 'px';
-    });
-    document.getElementById('fontDown').addEventListener('click', () => {
-      currentFontSize = Math.max(14, currentFontSize - 1);
-      document.getElementById('artBody').style.fontSize = currentFontSize + 'px';
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      showToast('Content is curated offline. Paste a new link or ask Grok for the latest.');
+      // subtle animation
+      const btn = document.getElementById('refreshBtn');
+      btn.style.transition = 'transform 0.5s';
+      btn.style.transform = 'rotate(360deg)';
+      setTimeout(() => { btn.style.transform = ''; }, 500);
     });
 
-    // Back
-    document.getElementById('backBtn').addEventListener('click', goHome);
+    document.getElementById('fontUp').addEventListener('click', () => { settings.fontSize = Math.min(24, settings.fontSize + 1); applySettings(); });
+    document.getElementById('fontDown').addEventListener('click', () => { settings.fontSize = Math.max(14, settings.fontSize - 1); applySettings(); });
+    document.getElementById('setFontUp').addEventListener('click', () => { settings.fontSize = Math.min(24, settings.fontSize + 1); applySettings(); });
+    document.getElementById('setFontDown').addEventListener('click', () => { settings.fontSize = Math.max(14, settings.fontSize - 1); applySettings(); });
 
-    // Paste new link flow
-    const newLinkInput = document.getElementById('newLinkInput');
-    const submitNewLink = document.getElementById('submitNewLink');
+    document.querySelectorAll('#themeControl .seg-btn').forEach(btn => btn.addEventListener('click', () => { settings.theme = btn.dataset.theme; applySettings(); }));
+    document.querySelectorAll('#fontControl .seg-btn').forEach(btn => btn.addEventListener('click', () => { settings.font = btn.dataset.font; applySettings(); }));
+    document.querySelectorAll('#spacingControl .seg-btn').forEach(btn => btn.addEventListener('click', () => { settings.spacing = parseFloat(btn.dataset.spacing); applySettings(); }));
 
-    submitNewLink.addEventListener('click', () => {
-      const url = newLinkInput.value.trim();
-      if (!url) {
-        showToast('Please paste a newspaper link first');
-        return;
-      }
-      if (!url.startsWith('http')) {
-        showToast('Please enter a valid URL starting with https://');
-        return;
-      }
+    document.getElementById('dictClose').addEventListener('click', closeDict);
+    document.getElementById('dictSave').addEventListener('click', saveCurrentWord);
+    document.addEventListener('click', e => {
+      if (dictPopup.classList.contains('show') && !dictPopup.contains(e.target) && !artBody.contains(e.target)) closeDict();
+    });
+
+    document.getElementById('vocabSearch').addEventListener('input', e => renderVocabulary(e.target.value));
+
+    // Paste new link
+    document.getElementById('submitNewLink').addEventListener('click', () => {
+      const url = document.getElementById('newLinkInput').value.trim();
+      if (!url) { showToast('Please paste a newspaper link first'); return; }
+      if (!url.startsWith('http')) { showToast('Please enter a valid URL'); return; }
       document.getElementById('modalText').innerHTML = `I’ll extract headlines & full articles from:<br><strong style="word-break:break-all;font-size:13px">${url}</strong><br><br>Share this link with me in the chat and I’ll generate a fresh beautiful mobile reader for you in seconds.`;
       modal.classList.add('show');
       modal.dataset.url = url;
     });
-
-    document.getElementById('modalCancel').addEventListener('click', () => {
-      modal.classList.remove('show');
-    });
-
+    document.getElementById('modalCancel').addEventListener('click', () => modal.classList.remove('show'));
     document.getElementById('modalConfirm').addEventListener('click', () => {
-      const url = modal.dataset.url;
-      // Copy to clipboard so user can easily paste to Grok
-      navigator.clipboard.writeText(url).then(() => {
-        showToast('Link copied! Now paste it in the chat with Grok');
-      }).catch(() => {
-        showToast('Please copy the link and send it to Grok');
-      });
+      navigator.clipboard.writeText(modal.dataset.url).then(() => showToast('Link copied! Now paste it in the chat with Grok')).catch(() => showToast('Please copy the link and send it to Grok'));
       modal.classList.remove('show');
-      newLinkInput.value = '';
+      document.getElementById('newLinkInput').value = '';
     });
 
     function showToast(msg) {
@@ -900,6 +1274,8 @@
     }
 
     // Init
+    applySettings();
+    updateVocabBadge();
     renderList();
   </script>
 </body>
