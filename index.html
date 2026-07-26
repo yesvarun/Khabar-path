@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#171512">
+<title>ਲਿੰਕ ਪਾਠ · Link Reader</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Source+Serif+4:opsz,ital,wght@8..60,0,400;8..60,0,600;8..60,1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#171512; --paper:#F7F3E9; --paper-2:#EFE9DA; --rule:#D8D0BC;
+  --press:#9E1B1B; --press-2:#C9403A; --muted:#6E6656;
+  --ui:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --disp:"Fraunces",Georgia,serif; --read:"Source Serif 4",Georgia,"Noto Serif",serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{font-family:var(--ui);background:var(--paper);color:var(--ink);min-height:100%;
+  padding-bottom:env(safe-area-inset-bottom)}
+button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer}
+input,select{font-family:inherit}
+.hide{display:none!important}
+
+header.mast{padding:calc(14px + env(safe-area-inset-top)) 18px 10px;border-bottom:3px double var(--ink);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.mast h1{font-family:var(--disp);font-weight:700;font-size:24px;letter-spacing:-.01em;line-height:1}
+.mast h1 small{display:block;font-family:var(--ui);font-weight:600;font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--press);margin-top:5px}
+.mast .gear{font-size:13px;font-weight:600;color:var(--muted);border:1px solid var(--rule);
+  border-radius:999px;padding:7px 12px;background:#fff8}
+.dateline{padding:7px 18px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  border-bottom:1px solid var(--rule);display:flex;justify-content:space-between}
+
+.wrap{padding:16px 18px 40px;max-width:720px;margin:0 auto}
+.drop{margin-top:6px;border:2px dashed var(--rule);border-radius:14px;background:#fff7;padding:22px 16px}
+.drop .big{font-family:var(--disp);font-weight:600;font-size:19px;text-align:center}
+.drop p{color:var(--muted);font-size:13px;margin:6px 0 12px;line-height:1.5;text-align:center}
+.linkrow{display:flex;gap:8px}
+.linkrow input{flex:1;min-width:0;padding:13px 14px;border:1px solid var(--rule);border-radius:12px;background:#fff;font-size:14px;outline:none}
+.btn{display:inline-block;background:var(--press);color:#FBF6EA;font-weight:700;font-size:15px;
+  padding:13px 20px;border-radius:999px;box-shadow:0 2px 0 #6d1010;white-space:nowrap}
+.btn:active{transform:translateY(1px);box-shadow:none}
+.btn.ghost{background:transparent;color:var(--press);box-shadow:none;border:1.5px solid var(--press)}
+.btn.block{display:block;width:100%;text-align:center}
+.hintline{margin-top:10px;font-size:11.5px;color:var(--muted);text-align:center;line-height:1.5}
+
+.sec-label{margin:24px 0 8px;font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--muted);display:flex;align-items:center;gap:10px}
+.sec-label::after{content:"";flex:1;height:1px;background:var(--rule)}
+.tile{background:#fff9;border:1px solid var(--rule);border-radius:12px;padding:13px 14px;margin-bottom:10px;
+  display:flex;gap:12px;align-items:center}
+.tile .fav{width:34px;height:34px;border-radius:8px;background:var(--paper-2);display:flex;align-items:center;
+  justify-content:center;font-family:var(--disp);font-weight:700;color:var(--press);font-size:16px;flex:none;overflow:hidden}
+.tile .fav img{width:100%;height:100%;object-fit:cover}
+.tile .meta{flex:1;min-width:0}
+.tile .meta b{font-size:14.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .meta i{font-style:normal;color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.tile .del{color:var(--muted);font-size:17px;padding:8px}
+.empty{color:var(--muted);font-size:13px;padding:8px 2px;line-height:1.5}
+
+.load{max-width:720px;margin:0 auto;padding:40px 24px;text-align:center}
+.spinner{width:34px;height:34px;border:3px solid var(--rule);border-top-color:var(--press);
+  border-radius:50%;margin:0 auto 16px;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load .stat{font-family:var(--disp);font-weight:600;font-size:18px}
+.load .sub{color:var(--muted);font-size:13px;margin-top:6px;word-break:break-all}
+
+#reader{position:fixed;inset:0;z-index:20;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  background:var(--r-bg,#FDFBF4);color:var(--r-ink,#1D1A15)}
+.rtop{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;
+  padding:calc(10px + env(safe-area-inset-top)) 14px 10px;background:var(--r-bg,#FDFBF4);
+  border-bottom:1px solid var(--r-rule,#E4DECC);z-index:2}
+.rtop button{font-size:14px;font-weight:700;padding:6px 10px;color:var(--r-mut,#7A7160)}
+.rtop .aa{font-family:var(--disp);font-size:16px;border:1px solid var(--r-rule,#E4DECC);border-radius:999px;padding:5px 14px}
+.rbody{max-width:640px;margin:0 auto;padding:26px 22px 40px}
+.rbody h2{font-family:var(--disp);font-weight:700;font-size:calc(var(--fs,19px)*1.45);line-height:1.22;letter-spacing:-.01em}
+.rbody .srcline{margin-top:12px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--r-mut,#7A7160);word-break:break-all}
+.rbody hr{border:none;border-top:3px double var(--r-rule,#E4DECC);margin:18px 0 22px}
+.prose{font-family:var(--read);font-size:var(--fs,19px);line-height:var(--lh,1.72)}
+.prose.sans{font-family:var(--ui)}
+.prose.just p{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
+.prose p{margin-bottom:1.05em}
+.prose h3{font-family:var(--disp);font-size:1.15em;margin:1.2em 0 .5em}
+.prose a{color:var(--press-2)}
+.prose img{max-width:100%;height:auto;border-radius:8px;margin:.6em 0}
+.rbody .openorig{display:inline-block;margin-top:24px;font-size:13px;font-weight:700;color:var(--press-2);
+  border:1.5px solid var(--r-rule,#E4DECC);border-radius:999px;padding:9px 16px}
+
+#aaPanel{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--r-bg,#FDFBF4);color:var(--r-ink,#1D1A15);
+  border-top:1px solid var(--r-rule,#E4DECC);border-radius:18px 18px 0 0;padding:16px 18px calc(20px + env(safe-area-inset-bottom));
+  box-shadow:0 -12px 40px #0003;transform:translateY(105%);transition:transform .25s}
+#aaPanel.open{transform:none}
+.aa-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.aa-row label{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--r-mut,#7A7160);width:64px}
+.aa-row input[type=range]{flex:1;accent-color:var(--press-2)}
+.seg{display:flex;flex:1;border:1.5px solid var(--r-rule,#E4DECC);border-radius:999px;overflow:hidden}
+.seg button{flex:1;padding:9px 4px;font-size:13px;font-weight:600;color:var(--r-mut,#7A7160)}
+.seg button.on{background:var(--press);color:#FBF6EA}
+.swatches{display:flex;gap:10px;flex:1}
+.sw{flex:1;height:42px;border-radius:10px;border:2px solid transparent;font-family:var(--read);font-size:15px}
+.sw.on{border-color:var(--press-2)}
+.sw[data-th=paper]{background:#FDFBF4;color:#1D1A15}
+.sw[data-th=sepia]{background:#F3E5C8;color:#46351D}
+.sw[data-th=slate]{background:#191C21;color:#D8D4CA}
+.sw[data-th=black]{background:#000;color:#B9B5AC}
+.scrim{position:fixed;inset:0;z-index:25;background:#0005}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:var(--paper);
+  padding:11px 18px;border-radius:999px;font-size:13px;z-index:60;box-shadow:0 8px 30px #0006;max-width:88%;text-align:center}
+.modal{position:fixed;inset:0;z-index:40;background:#000a;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--paper);width:100%;max-width:560px;border-radius:18px 18px 0 0;
+  padding:20px 20px calc(24px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}
+.sheet h2{font-family:var(--disp);font-size:20px;margin-bottom:4px}
+.sheet .note{font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:14px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.field input,.field select{width:100%;padding:12px 13px;border:1px solid var(--rule);border-radius:10px;background:#fff;font-size:14px}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="vHome">
+  <header class="mast">
+    <h1>ਲਿੰਕ ਪਾਠ<small>Link Reader · clean &amp; save</small></h1>
+    <button class="gear" id="btnSettings">⚙</button>
+  </header>
+  <div class="dateline"><span id="todayLine"></span><span>v1</span></div>
+  <div class="wrap">
+    <div class="drop">
+      <div class="big">Paste or share a link</div>
+      <p>Paste an article to read it clean — or a section/home page (like tribuneindia.com) to list every article on it, then tap to read each. Saved as shortcuts you reopen anytime.</p>
+      <div class="linkrow">
+        <input id="urlInput" type="url" inputmode="url" placeholder="https://…" autocomplete="off">
+        <button class="btn" id="btnGo">Read</button>
+      </div>
+      <div class="hintline">Tip: in any app use Share → copy the URL, or long-press a link → Copy, then paste here.</div>
+    </div>
+    <div class="sec-label">Saved Shortcuts</div>
+    <div id="libList"></div>
+  </div>
+</div>
+
+<!-- INDEX LIST (all articles on a section/home page) -->
+<div id="vList" class="hide">
+  <div style="position:sticky;top:0;z-index:5;background:var(--paper)">
+    <header class="mast">
+      <h1 id="listTitle" style="font-size:20px">Articles<small id="listSub">—</small></h1>
+      <button class="gear" id="btnListBack">‹ Home</button>
+    </header>
+  </div>
+  <div class="wrap" id="listWrap" style="padding-top:8px"></div>
+  <div id="prepBar" class="wrap hide" style="padding-top:0">
+    <button class="btn block" id="btnPrepAll">⬇ Fetch &amp; typeset all articles</button>
+    <div id="prepBox" class="hide" style="margin-top:14px">
+      <div class="pressbar" style="height:14px;border:1.5px solid var(--ink);border-radius:999px;overflow:hidden;background:#fff8">
+        <i id="prepFill" style="display:block;height:100%;width:0%;background:repeating-linear-gradient(45deg,var(--press),var(--press) 8px,var(--press-2) 8px,var(--press-2) 16px);transition:width .3s"></i>
+      </div>
+      <div id="prepStat" style="font-family:var(--disp);font-weight:600;font-size:16px;margin-top:10px;text-align:center">—</div>
+      <div id="prepLog" style="margin-top:12px;background:#fff8;border:1px solid var(--rule);border-radius:12px;padding:10px 12px;font-size:12px;color:var(--muted);max-height:200px;overflow:auto;line-height:1.7"></div>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="vLoad" class="hide">
+  <header class="mast">
+    <h1>Fetching…<small>Link Reader</small></h1>
+    <button class="gear" id="btnLoadBack">✕</button>
+  </header>
+  <div class="load">
+    <div class="spinner"></div>
+    <div class="stat" id="loadStat">Reaching the page…</div>
+    <div class="sub" id="loadSub"></div>
+  </div>
+</div>
+
+<!-- READER -->
+<div id="reader" class="hide">
+  <div class="rtop">
+    <button id="btnRdBack">‹ Home</button>
+    <div style="display:flex;gap:6px;align-items:center">
+      <button id="btnSave" style="font-size:19px">☆</button>
+      <button class="aa" id="btnAa">Aa</button>
+    </div>
+  </div>
+  <div class="rbody">
+    <h2 id="rdHead"></h2>
+    <div class="srcline" id="rdSrc"></div>
+    <hr>
+    <div class="prose" id="rdBody"></div>
+    <a id="rdOrig" class="openorig" target="_blank" rel="noopener">Open original page ↗</a>
+  </div>
+</div>
+
+<div class="scrim hide" id="scrim"></div>
+<div id="aaPanel">
+  <div class="aa-row"><label>Size</label><input type="range" id="ctlSize" min="15" max="26" step="1"></div>
+  <div class="aa-row"><label>Spacing</label><input type="range" id="ctlLh" min="1.4" max="2.1" step="0.05"></div>
+  <div class="aa-row"><label>Font</label>
+    <div class="seg">
+      <button data-font="serif" id="fSerif">Serif</button>
+      <button data-font="sans" id="fSans">Sans</button>
+      <button data-font="just" id="fJust">Justify</button>
+    </div>
+  </div>
+  <div class="aa-row"><label>Page</label>
+    <div class="swatches">
+      <button class="sw" data-th="paper">Aa</button>
+      <button class="sw" data-th="sepia">Aa</button>
+      <button class="sw" data-th="slate">Aa</button>
+      <button class="sw" data-th="black">Aa</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="modal hide" id="mSettings">
+  <div class="sheet">
+    <h2>Setup</h2>
+    <p class="note">The reader proxy fetches pages server-side (a phone browser can't fetch other sites directly). Jina AI's free reader needs no key. All shortcuts and settings stay on this phone.</p>
+    <div class="field">
+      <label>Reader proxy</label>
+      <select id="setProxy">
+        <option value="jina">Jina AI Reader — free, no key (recommended)</option>
+        <option value="jinakey">Jina AI Reader — with key (faster, higher limits)</option>
+        <option value="direct">Direct fetch (only CORS-open sites)</option>
+      </select>
+    </div>
+    <div class="field" id="fldJinaKey">
+      <label>Jina API key (optional, free at jina.ai)</label>
+      <input type="password" id="setJinaKey" placeholder="jina_…">
+    </div>
+    <button class="btn block" id="btnSaveSet">Save</button>
+    <button class="btn ghost block" id="btnCloseSet" style="margin-top:8px">Close</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+function $(id){ return document.getElementById(id); }
+function esc(s){ return (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function toast(m,ms){ var t=document.createElement('div'); t.className='toast'; t.textContent=m;
+  document.body.appendChild(t); setTimeout(function(){t.remove();}, ms||2600); }
+function show(id){ ['vHome','vList','vLoad','reader'].forEach(function(v){$(v).classList.add('hide');});
+  $(id).classList.remove('hide'); window.scrollTo(0,0); }
+
+var CFG = {
+  proxy: localStorage.getItem('lk_proxy') || 'jina',
+  jinaKey: localStorage.getItem('lk_jinakey') || ''
+};
+var READER = Object.assign({size:19, lh:1.72, font:'serif', just:true, theme:'paper'},
+  JSON.parse(localStorage.getItem('lk_reader') || '{}'));
+function saveReader(){ localStorage.setItem('lk_reader', JSON.stringify(READER)); }
+
+/* ---------- IndexedDB: saved shortcuts + cached article text ---------- */
+var DB=null;
+function openDB(){ return new Promise(function(res,rej){
+  var r=indexedDB.open('linkreader',1);
+  r.onupgradeneeded=function(e){ e.target.result.createObjectStore('links',{keyPath:'url'}); };
+  r.onsuccess=function(e){ DB=e.target.result; res(); };
+  r.onerror=function(){ rej(r.error); };
+}); }
+function dbPut(o){ return new Promise(function(res,rej){ var tx=DB.transaction('links','readwrite');
+  tx.objectStore('links').put(o); tx.oncomplete=res; tx.onerror=function(){rej(tx.error);}; }); }
+function dbGet(url){ return new Promise(function(res){ var tx=DB.transaction('links','readonly');
+  var rq=tx.objectStore('links').get(url); rq.onsuccess=function(){res(rq.result||null);}; rq.onerror=function(){res(null);}; }); }
+function dbAll(){ return new Promise(function(res,rej){ var out=[]; var tx=DB.transaction('links','readonly');
+  tx.objectStore('links').openCursor().onsuccess=function(e){ var c=e.target.result;
+    if(c){out.push(c.value); c.continue();} else res(out); }; tx.onerror=function(){rej(tx.error);}; }); }
+function dbDel(url){ return new Promise(function(res){ var tx=DB.transaction('links','readwrite');
+  tx.objectStore('links').delete(url); tx.oncomplete=res; }); }
+
+/* ---------- url helpers ---------- */
+function normUrl(u){ u=(u||'').trim(); if(!u) return '';
+  if(!/^https?:\/\//i.test(u)) u='https://'+u; return u; }
+function hostOf(u){ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return u; } }
+
+/* ---------- fetch a link → clean article ---------- */
+function fetchViaJina(url, withKey){
+  var headers={'x-respond-with':'markdown'};
+  if(withKey && CFG.jinaKey) headers['Authorization']='Bearer '+CFG.jinaKey;
+  return fetch('https://r.jina.ai/'+url, {headers:headers}).then(function(r){
+    if(!r.ok) throw new Error('Proxy '+r.status);
+    return r.text();
+  }).then(function(md){ return parseJina(md, url); });
+}
+function fetchDirect(url){
+  return fetch(url).then(function(r){
+    if(!r.ok) throw new Error('Fetch '+r.status);
+    return r.text();
+  }).then(function(html){ return parseHtml(html, url); });
+}
+function fetchArticle(url){
+  if(CFG.proxy==='direct') return fetchDirect(url);
+  return fetchViaJina(url, CFG.proxy==='jinakey');
+}
+
+/* Fetch an index/section/home page and return the list of article links on it.
+   Jina's "links summary" gives us every link with its anchor text. */
+function fetchIndex(url){
+  var headers={'x-with-links-summary':'true'};
+  if(CFG.proxy==='jinakey' && CFG.jinaKey) headers['Authorization']='Bearer '+CFG.jinaKey;
+  return fetch('https://r.jina.ai/'+url, {headers:headers}).then(function(r){
+    if(!r.ok) throw new Error('Proxy '+r.status);
+    return r.text();
+  }).then(function(md){ return parseIndex(md, url); });
+}
+/* Jina appends a "Links/Buttons" section: "- [anchor text](https://…)" lines.
+   Keep links that look like real articles on the same site. */
+function parseIndex(md, url){
+  var host=hostOf(url);
+  var seen={}, items=[];
+  var re=/\[([^\]]{12,140})\]\((https?:\/\/[^)\s]+)\)/g, m;
+  while((m=re.exec(md))){
+    var text=m[1].trim(), link=m[2].trim();
+    var lh=hostOf(link);
+    if(lh!==host && lh.indexOf(host)===-1 && host.indexOf(lh)===-1) continue; // same-site only
+    if(seen[link]) continue;
+    if(!looksLikeArticle(link, text)) continue;
+    seen[link]=1;
+    items.push({title:text, url:link});
+  }
+  return { host:host, src:url, items:items };
+}
+function looksLikeArticle(link, text){
+  var l=link.toLowerCase();
+  // reject obvious non-articles
+  if(/\.(jpg|jpeg|png|gif|svg|pdf|css|js|xml)(\?|$)/.test(l)) return false;
+  if(/(facebook|twitter|x|instagram|youtube|whatsapp|linkedin|t)\.(com|co|me)/.test(l)) return false;
+  if(/\/(tag|tags|author|about|contact|privacy|advertise|subscribe|epaper|login|register|category)\b/.test(l)) return false;
+  if(/#|mailto:|javascript:/.test(l)) return false;
+  // article URLs usually have a longish slug or a numeric id
+  var path=l.split('#')[0].split('?')[0];
+  var slug=path.replace(/\/$/,'').split('/').pop()||'';
+  var deep=(path.match(/\//g)||[]).length>=4;
+  var goodSlug=slug.length>=12 && /[a-z].*-.*[a-z]/.test(slug);
+  var hasId=/\d{5,}/.test(path);
+  if(!(goodSlug||hasId||deep)) return false;
+  if(text.split(/\s+/).length<3) return false; // headlines have several words
+  return true;
+}
+function isIndexUrl(url){
+  try{
+    var u=new URL(url);
+    var path=u.pathname.replace(/\/+$/,'');
+    if(path==='' ) return true;                       // home page
+    var segs=path.split('/').filter(Boolean);
+    var last=segs[segs.length-1]||'';
+    // a section like /nation or /punjab is short & slug-less; an article has a long slug
+    if(segs.length<=2 && !/\d{5,}/.test(path) && !/[a-z]-[a-z].*-[a-z]/.test(last)) return true;
+    return false;
+  }catch(e){ return false; }
+}
+
+/* Jina returns markdown with a Title:/URL Source: header, then content */
+function parseJina(md, url){
+  var title='', src=url, body=md;
+  var mt=md.match(/^Title:\s*(.+)$/m); if(mt) title=mt[1].trim();
+  var ms=md.match(/^URL Source:\s*(.+)$/m); if(ms) src=ms[1].trim();
+  var idx=md.indexOf('Markdown Content:');
+  if(idx>-1) body=md.slice(idx+'Markdown Content:'.length);
+  return { title: title || hostOf(url), src: src, host: hostOf(url), html: mdToHtml(body) };
+}
+/* minimal, safe markdown → html */
+function mdToHtml(md){
+  var lines=(md||'').replace(/\r/g,'').split('\n');
+  var out=[], para=[];
+  function inline(t){
+    t=esc(t);
+    t=t.replace(/!\[([^\]]*)\]\(([^)\s]+)[^)]*\)/g,function(_,a,u){ return /^https?:\/\//.test(u)?'<img src="'+u+'" alt="'+a+'">':''; });
+    t=t.replace(/\[([^\]]+)\]\(([^)\s]+)[^)]*\)/g,function(_,a,u){ return /^https?:\/\//.test(u)?'<a href="'+u+'" target="_blank" rel="noopener">'+a+'</a>':a; });
+    t=t.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/(^|[^*])\*([^*]+)\*/g,'$1<i>$2</i>');
+    return t;
+  }
+  function flush(){ if(para.length){ out.push('<p>'+inline(para.join(' '))+'</p>'); para=[]; } }
+  lines.forEach(function(ln){
+    var h=ln.match(/^(#{1,4})\s+(.+)$/);
+    if(h){ flush(); out.push('<h3>'+inline(h[2])+'</h3>'); return; }
+    if(/^\s*$/.test(ln)){ flush(); return; }
+    if(/^\s*[-*]\s+/.test(ln)){ flush(); out.push('<p>• '+inline(ln.replace(/^\s*[-*]\s+/,''))+'</p>'); return; }
+    para.push(ln.trim());
+  });
+  flush();
+  return out.join('\n');
+}
+/* fallback parser for direct-fetch HTML */
+function parseHtml(html, url){
+  var doc=new DOMParser().parseFromString(html,'text/html');
+  ['script','style','nav','header','footer','aside','form','noscript','iframe'].forEach(function(t){
+    Array.prototype.slice.call(doc.querySelectorAll(t)).forEach(function(n){n.remove();});
+  });
+  var title=((doc.querySelector('h1')&&doc.querySelector('h1').textContent)||doc.title||hostOf(url)).trim();
+  var art=doc.querySelector('article')||doc.querySelector('main')||doc.body;
+  var ps=Array.prototype.slice.call(art.querySelectorAll('p,h2,h3'))
+    .map(function(n){ var t=n.textContent.trim(); if(t.length<25 && n.tagName==='P') return '';
+      return n.tagName[0]==='H'?'<h3>'+esc(t)+'</h3>':'<p>'+esc(t)+'</p>'; })
+    .filter(Boolean);
+  return { title:title, src:url, host:hostOf(url), html: ps.join('\n') || '<p>Could not extract readable text from this page.</p>' };
+}
+
+/* ---------- entry point: decide index-list vs single-article ---------- */
+function handleLink(url, forceFresh){
+  url=normUrl(url);
+  if(!url){ toast('Enter a link first'); return; }
+  if(isIndexUrl(url)){ openIndex(url); }
+  else { openUrl(url, forceFresh); }
+}
+function openIndex(url){
+  $('loadStat').textContent='Reading the section…';
+  $('loadSub').textContent=hostOf(url)+' — finding articles';
+  show('vLoad');
+  fetchIndex(url).then(function(res){
+    if(!res.items.length){
+      toast('No article links found — opening as a single page');
+      openUrl(url, true); return;
+    }
+    LIST={ host:res.host, src:url, items:res.items };
+    paintList();
+    show('vList');
+  }).catch(function(e){ toast('Could not read that page: '+(e.message||e)); show('vHome'); });
+}
+var LIST=null;
+function paintList(){
+  $('listTitle').firstChild.textContent = LIST.host;
+  $('listSub').textContent = LIST.items.length+' articles found';
+  $('prepBar').classList.remove('hide');
+  var box=$('listWrap'); box.innerHTML='';
+  var hint=document.createElement('div'); hint.className='hintline';
+  hint.style.textAlign='left'; hint.style.margin='0 0 12px';
+  hint.textContent='Tap a headline to read it, or fetch & typeset all below so they open instantly.';
+  box.appendChild(hint);
+  LIST.items.forEach(function(it, i){
+    var el=document.createElement('div'); el.className='tile';
+    el.id='li'+i;
+    el.innerHTML='<div class="fav">'+(it.ready?'✓':'›')+'</div>'+
+      '<div class="meta"><b>'+esc(it.title)+'</b><i>'+esc(it.ready?'ready · tap to read':hostOf(it.url))+'</i></div>';
+    el.onclick=function(){ openUrl(it.url, false); };
+    box.appendChild(el);
+  });
+}
+function markReady(i){
+  var it=LIST.items[i]; it.ready=true;
+  var el=$('li'+i); if(el){ el.querySelector('.fav').textContent='✓';
+    el.querySelector('.meta i').textContent='ready · tap to read'; }
+}
+function plog(html){
+  var b=$('prepLog'); b.insertAdjacentHTML('afterbegin','<div>'+html+'</div>');
+  while(b.children.length>80) b.lastChild.remove();
+}
+/* Stage: fetch every listed article through the proxy, cache each, at a polite pace */
+var PREP={running:false};
+function prepareAll(){
+  if(PREP.running) return;
+  PREP.running=true;
+  $('prepBox').classList.remove('hide');
+  $('btnPrepAll').textContent='Preparing… (tap a ready ✓ anytime)';
+  $('prepLog').innerHTML='';
+  var items=LIST.items, done=0, ok=0, i=0;
+  var GAP = (CFG.proxy==='jinakey' && CFG.jinaKey) ? 600 : 2500; // free tier: go gentle
+  function paint(){
+    $('prepFill').style.width=Math.round(100*done/items.length)+'%';
+    $('prepStat').textContent='Article '+done+' / '+items.length+' · '+ok+' typeset';
+  }
+  function step(){
+    if(!PREP.running){ finishPrep(ok, items.length); return; }
+    if(i>=items.length){ finishPrep(ok, items.length); return; }
+    var idx=i++, it=items[idx];
+    if(it.ready){ done++; ok++; paint(); plog('“'+esc(it.title).slice(0,50)+'…” — already ready'); setTimeout(step, 40); return; }
+    plog('fetching “'+esc(it.title).slice(0,50)+'…”');
+    dbGet(it.url).then(function(cached){
+      if(cached && cached.html){ return cached; }
+      return fetchArticle(it.url).then(function(art){
+        art.url=it.url;
+        return { url:it.url, title:art.title||it.title, host:art.host, src:art.src,
+                 html:art.html, savedAt:Date.now(), lastRead:0, fromSection:LIST.src };
+      }).then(function(rec){ return dbPut(rec).then(function(){ return rec; }); });
+    }).then(function(rec){
+      ok++; markReady(idx);
+      plog('✓ “'+esc(rec.title||it.title).slice(0,50)+'…”');
+    }).catch(function(e){
+      plog('✗ “'+esc(it.title).slice(0,40)+'…” — '+esc(e.message||'failed'));
+    }).then(function(){
+      done++; paint();
+      setTimeout(step, GAP);
+    });
+  }
+  paint(); step();
+}
+function finishPrep(ok, total){
+  PREP.running=false;
+  $('btnPrepAll').textContent='✓ '+ok+' of '+total+' ready — re-run for the rest';
+  $('prepStat').textContent='Done · '+ok+' typeset and saved on the phone';
+  toast(ok+' articles ready to read offline');
+}
+
+/* ---------- open a URL (cached or fresh) ---------- */
+var CURRENT=null;
+function openUrl(url, forceFresh){
+  url=normUrl(url);
+  if(!url){ toast('Enter a link first'); return; }
+  $('loadStat').textContent='Reaching the page…';
+  $('loadSub').textContent=hostOf(url);
+  show('vLoad');
+  var cachedP = forceFresh ? Promise.resolve(null) : dbGet(url);
+  cachedP.then(function(saved){
+    if(saved && saved.html){ saved.url=url; renderArticle(saved, false); return; }
+    $('loadStat').textContent='Cleaning the article…';
+    fetchArticle(url).then(function(art){ art.url=url; renderArticle(art, true); })
+      .catch(function(e){ toast('Could not read that link: '+(e.message||e)); show('vHome'); });
+  });
+}
+function renderArticle(art, isFresh){
+  CURRENT={ url:art.url, title:art.title, host:art.host, src:art.src||art.url, html:art.html, saved:!isFresh };
+  $('rdHead').textContent=art.title;
+  $('rdSrc').textContent=art.host+' · '+(art.src||art.url);
+  $('rdBody').innerHTML=art.html;
+  $('rdOrig').href=art.url||art.src;
+  updateSaveStar();
+  applyReader();
+  show('reader');
+  $('reader').scrollTop=0;
+  if(CURRENT.saved && CURRENT.url) dbGet(CURRENT.url).then(function(s){ if(s){ s.lastRead=Date.now(); dbPut(s); } });
+}
+
+/* ---------- save / unsave shortcut ---------- */
+function updateSaveStar(){ $('btnSave').textContent = CURRENT && CURRENT.saved ? '★' : '☆'; }
+function toggleSave(){
+  if(!CURRENT) return;
+  if(CURRENT.saved){
+    dbDel(CURRENT.url).then(function(){ CURRENT.saved=false; updateSaveStar(); toast('Removed from shortcuts'); });
+  } else {
+    dbPut({ url:CURRENT.url, title:CURRENT.title, host:CURRENT.host, src:CURRENT.src,
+            html:CURRENT.html, savedAt:Date.now(), lastRead:Date.now() })
+      .then(function(){ CURRENT.saved=true; updateSaveStar(); toast('Saved — opens instantly next time'); });
+  }
+}
+
+/* ---------- library ---------- */
+function paintLibrary(){
+  dbAll().then(function(links){
+    links.sort(function(a,b){ return (b.lastRead||b.savedAt)-(a.lastRead||a.savedAt); });
+    var box=$('libList');
+    if(!links.length){ box.innerHTML='<div class="empty">No shortcuts yet. Read a link above, then tap ☆ in the reader to pin it here.</div>'; return; }
+    box.innerHTML='';
+    links.forEach(function(l){
+      var el=document.createElement('div'); el.className='tile';
+      var letter=(l.host||'?').charAt(0).toUpperCase();
+      el.innerHTML=
+        '<div class="fav"><img src="https://www.google.com/s2/favicons?domain='+encodeURIComponent(l.host)+'&sz=64" '+
+          'onerror="this.replaceWith(document.createTextNode(\''+letter+'\'))"></div>'+
+        '<div class="meta"><b>'+esc(l.title)+'</b><i>'+esc(l.host)+'</i></div>'+
+        '<button class="del">🗑</button>';
+      el.querySelector('.meta').onclick=function(){ LIST=null; openUrl(l.url); };
+      el.querySelector('.fav').onclick=function(){ LIST=null; openUrl(l.url); };
+      el.querySelector('.del').onclick=function(){ if(confirm('Remove "'+l.title+'"?')) dbDel(l.url).then(paintLibrary); };
+      box.appendChild(el);
+    });
+  });
+}
+
+/* ---------- reader theming ---------- */
+var THEMES={
+  paper:{bg:'#FDFBF4',ink:'#1D1A15',rule:'#E4DECC',mut:'#7A7160',bar:'#FDFBF4'},
+  sepia:{bg:'#F3E5C8',ink:'#46351D',rule:'#DCC9A4',mut:'#8A7350',bar:'#F3E5C8'},
+  slate:{bg:'#191C21',ink:'#D8D4CA',rule:'#31353D',mut:'#8B8F98',bar:'#191C21'},
+  black:{bg:'#000000',ink:'#B9B5AC',rule:'#242424',mut:'#6F6C66',bar:'#000000'}
+};
+function applyReader(){
+  var t=THEMES[READER.theme]||THEMES.paper;
+  ['reader','aaPanel'].forEach(function(id){
+    var el=$(id);
+    el.style.setProperty('--r-bg',t.bg); el.style.setProperty('--r-ink',t.ink);
+    el.style.setProperty('--r-rule',t.rule); el.style.setProperty('--r-mut',t.mut);
+  });
+  var r=$('reader'); r.style.setProperty('--fs',READER.size+'px'); r.style.setProperty('--lh',READER.lh);
+  $('aaPanel').style.color=t.ink;
+  document.querySelector('meta[name=theme-color]').content=t.bar;
+  var prose=$('rdBody'); prose.classList.toggle('sans',READER.font==='sans'); prose.classList.toggle('just',!!READER.just);
+  $('ctlSize').value=READER.size; $('ctlLh').value=READER.lh;
+  $('fSerif').classList.toggle('on',READER.font==='serif');
+  $('fSans').classList.toggle('on',READER.font==='sans');
+  $('fJust').classList.toggle('on',!!READER.just);
+  document.querySelectorAll('.sw').forEach(function(s){ s.classList.toggle('on',s.dataset.th===READER.theme); });
+}
+
+/* ---------- Aa panel ---------- */
+function openAa(open){ $('aaPanel').classList.toggle('open',open); $('scrim').classList.toggle('hide',!open); }
+$('btnAa').onclick=function(){ openAa(true); };
+$('scrim').onclick=function(){ openAa(false); };
+$('ctlSize').oninput=function(e){ READER.size=+e.target.value; saveReader(); applyReader(); };
+$('ctlLh').oninput=function(e){ READER.lh=+e.target.value; saveReader(); applyReader(); };
+$('fSerif').onclick=function(){ READER.font='serif'; saveReader(); applyReader(); };
+$('fSans').onclick=function(){ READER.font='sans'; saveReader(); applyReader(); };
+$('fJust').onclick=function(){ READER.just=!READER.just; saveReader(); applyReader(); };
+document.querySelectorAll('.sw').forEach(function(s){ s.onclick=function(){ READER.theme=s.dataset.th; saveReader(); applyReader(); }; });
+
+/* ---------- settings ---------- */
+function openSettings(){ $('setProxy').value=CFG.proxy; $('setJinaKey').value=CFG.jinaKey; $('mSettings').classList.remove('hide'); }
+$('btnSettings').onclick=openSettings;
+$('btnCloseSet').onclick=function(){ $('mSettings').classList.add('hide'); };
+$('btnSaveSet').onclick=function(){
+  CFG.proxy=$('setProxy').value; CFG.jinaKey=$('setJinaKey').value.trim();
+  localStorage.setItem('lk_proxy',CFG.proxy); localStorage.setItem('lk_jinakey',CFG.jinaKey);
+  $('mSettings').classList.add('hide'); toast('Saved');
+};
+
+/* ---------- wiring ---------- */
+$('btnGo').onclick=function(){ handleLink($('urlInput').value, true); $('urlInput').value=''; };
+$('urlInput').addEventListener('keydown',function(e){ if(e.key==='Enter'){ $('btnGo').click(); } });
+$('btnPrepAll').onclick=prepareAll;
+$('btnListBack').onclick=function(){ PREP.running=false; $('prepBar').classList.add('hide'); paintLibrary(); show('vHome'); };
+$('btnLoadBack').onclick=function(){ show('vHome'); };
+$('btnRdBack').onclick=function(){ if(LIST){ show('vList'); } else { paintLibrary(); show('vHome'); } };
+$('btnSave').onclick=toggleSave;
+
+/* ---------- share-target / ?url= deep link ---------- */
+function handleIncoming(){
+  var p=new URLSearchParams(location.search);
+  var shared=p.get('url')||p.get('text')||p.get('link');
+  if(shared){ var m=shared.match(/https?:\/\/\S+/); if(m){ handleLink(m[0], true); return true; } }
+  return false;
+}
+
+/* ---------- boot ---------- */
+$('todayLine').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+openDB().then(function(){ paintLibrary(); handleIncoming(); });
+</script>
+</body>
+</html>
