@@ -1426,10 +1426,33 @@
       try { return new URL(href, base).href; } catch { return null; }
     }
 
+    // Normalize URL so the same story with tracking params / trailing slash is treated as one
+    function normalizeUrl(url) {
+      try {
+        const u = new URL(url);
+        u.hash = '';
+        // strip common tracking params
+        ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','fbclid','gclid','ref','source'].forEach(p => u.searchParams.delete(p));
+        let path = u.pathname.replace(/\/+$/, ''); // remove trailing slash
+        return (u.origin + path).toLowerCase();
+      } catch { return url; }
+    }
+
+    // Simple title fingerprint for near-duplicate detection
+    function titleKey(title) {
+      return (title || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 60);
+    }
+
     function parseHomepage(html, baseUrl) {
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const items = [];
-      const seen = new Set();
+      const seenUrls = new Set();
+      const seenTitles = new Set();
 
       // Prefer article / headline links
       const candidates = [
@@ -1448,12 +1471,20 @@
         if (/^(home|login|subscribe|advertisement|menu|search|sign|register|about|contact|privacy|terms|cookie)/i.test(title)) continue;
 
         const full = absoluteUrl(baseUrl, href);
-        if (!full || seen.has(full)) continue;
+        if (!full) continue;
+
+        const normUrl = normalizeUrl(full);
+        const tKey = titleKey(title);
+
+        // Skip if we've already seen this URL or a very similar title
+        if (seenUrls.has(normUrl) || seenTitles.has(tKey)) continue;
+
         // Skip non-article-looking URLs
         if (/\/(tag|category|author|page|search|video|gallery|photo|live-blog)\//i.test(full) && !/\/news\//i.test(full)) continue;
-        if (full === baseUrl || full === baseUrl + '/') continue;
+        if (normUrl === normalizeUrl(baseUrl)) continue;
 
-        seen.add(full);
+        seenUrls.add(normUrl);
+        seenTitles.add(tKey);
 
         // Try to find nearby summary
         let summary = '';
