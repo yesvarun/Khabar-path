@@ -829,7 +829,15 @@
         </div>
         <input type="url" class="paste-input" id="newLinkInput" placeholder="Paste any digital newspaper homepage link…" />
         <button class="paste-btn" id="submitNewLink">Generate Reader</button>
-        <p class="paste-hint">Paste link once → parses & stores in your browser. Opens instantly next time. Refresh updates the store.</p>
+        <p class="paste-hint">Paste link once → parses & stores full stories in your browser. Progress log appears below.</p>
+      </div>
+
+      <!-- Live progress log -->
+      <div id="progressLog" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:20px; font-size:13px; line-height:1.55; max-height:220px; overflow-y:auto;">
+        <div style="font-weight:600; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+          <span id="progressSpinner">⏳</span> Progress
+        </div>
+        <div id="progressLines" style="font-family:monospace; font-size:12px; color:var(--text-secondary);"></div>
       </div>
 
       <div id="articleList"></div>
@@ -1468,7 +1476,7 @@
           title,
           summary: summary || title.slice(0, 100) + '…',
           url: full,
-          body: `<p>${summary || 'Loading full article…'}</p><p><em>Tap “Load full story” if available, or the summary above.</em></p>`
+          body: `<p>${summary || 'Full story will load when you open it…'}</p>`
         });
 
         if (items.length >= 25) break;
@@ -1490,46 +1498,75 @@
       return items;
     }
 
+    function logProgress(msg) {
+      const box = document.getElementById('progressLog');
+      const lines = document.getElementById('progressLines');
+      if (!box || !lines) return;
+      box.style.display = 'block';
+      const time = new Date().toLocaleTimeString();
+      lines.innerHTML += `<div>[${time}] ${msg}</div>`;
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function clearProgress() {
+      const lines = document.getElementById('progressLines');
+      if (lines) lines.innerHTML = '';
+    }
+
     async function loadFullArticle(article) {
       if (!article.url || article._fullLoaded) return article;
       try {
-        showToast('Fetching full story…');
+        logProgress(`Fetching full text: ${article.title.slice(0, 40)}…`);
         const html = await fetchViaProxy(article.url);
         const doc = new DOMParser().parseFromString(html, 'text/html');
 
-        // Remove scripts, styles, nav
-        doc.querySelectorAll('script, style, nav, header, footer, aside, .ad, .advertisement, .related, .comments').forEach(el => el.remove());
+        // Clean noise
+        doc.querySelectorAll('script, style, nav, header, footer, aside, .ad, .advertisement, .related, .comments, .social, .share, .newsletter, noscript').forEach(el => el.remove());
 
         let content = '';
         const selectors = [
+          '[itemprop="articleBody"]',
           'article .story-content', 'article .content', '.article-body', '.story-body',
-          '.article__body', '.entry-content', '[itemprop="articleBody"]',
-          'article p', '.post-content p', 'main p'
+          '.article__body', '.entry-content', '.post-content',
+          '.storydetail', '.article-content', '#story-content',
+          'article p', 'main article p', '.content-body p'
         ];
         for (const sel of selectors) {
           const nodes = doc.querySelectorAll(sel);
           if (nodes.length >= 2) {
             content = Array.from(nodes).map(n => {
               const t = n.textContent.replace(/\s+/g, ' ').trim();
-              return t.length > 40 ? `<p>${t}</p>` : '';
+              return t.length > 35 ? `<p>${t}</p>` : '';
             }).filter(Boolean).join('');
-            if (content.length > 300) break;
+            if (content.length > 400) break;
+          }
+        }
+
+        // Last resort: largest text block
+        if (content.length < 300) {
+          const allP = Array.from(doc.querySelectorAll('p'))
+            .map(p => p.textContent.replace(/\s+/g, ' ').trim())
+            .filter(t => t.length > 60);
+          if (allP.length >= 3) {
+            content = allP.slice(0, 25).map(t => `<p>${t}</p>`).join('');
           }
         }
 
         if (content.length > 200) {
           article.body = content;
           article._fullLoaded = true;
-          // Update author / time if found
           const author = doc.querySelector('[rel="author"], .author, .byline, [itemprop="author"]')?.textContent?.trim();
           if (author) article.author = author.slice(0, 60);
+          logProgress(`✓ Full story saved (${Math.round(content.length/100)/10}k chars)`);
         } else {
-          article.body = `<p>${article.summary}</p><p><a href="${article.url}" target="_blank" rel="noopener">Open original article ↗</a></p>`;
+          // Keep summary only – no external link as main content
+          article.body = `<p>${article.summary || 'Full text could not be extracted from this page.'}</p>`;
+          logProgress(`⚠ Only summary available for this story`);
         }
       } catch (e) {
-        article.body = `<p>${article.summary}</p><p><a href="${article.url}" target="_blank" rel="noopener">Open original article ↗</a></p>`;
+        article.body = `<p>${article.summary || 'Could not load this story.'}</p>`;
+        logProgress(`✗ Failed: ${article.title.slice(0, 30)}…`);
       }
-      // Persist updated body so next open is instant
       try { localStorage.setItem('tribuneArticles', JSON.stringify(articles)); } catch(e) {}
       return article;
     }
@@ -1537,44 +1574,66 @@
     async function fetchAndRender(sourceUrl, isRefresh = false) {
       const btn = document.getElementById('refreshBtn');
       const submitBtn = document.getElementById('submitNewLink');
+      const spinner = document.getElementById('progressSpinner');
       btn.style.transition = 'transform 0.6s';
       btn.style.transform = 'rotate(360deg)';
       submitBtn.disabled = true;
       submitBtn.textContent = isRefresh ? 'Refreshing…' : 'Parsing…';
+      clearProgress();
+      logProgress(isRefresh ? 'Refreshing source…' : 'Starting parse…');
+      logProgress(`Target: ${sourceUrl}`);
+      if (spinner) spinner.textContent = '⏳';
 
       try {
-        showToast(isRefresh ? 'Fetching latest stories…' : 'Parsing newspaper online…');
+        logProgress('Connecting via proxy…');
         const html = await fetchViaProxy(sourceUrl);
+        logProgress(`Page received (${Math.round(html.length/1024)} KB)`);
+
+        logProgress('Extracting headlines…');
         const parsed = parseHomepage(html, sourceUrl);
 
         if (parsed.length === 0) {
-          showToast('Could not extract stories. Site may block scraping. Try another link or ask Grok.');
+          logProgress('✗ No stories found. Site may block scraping.');
+          showToast('Could not extract stories. Try another link or ask Grok.');
           return;
         }
+        logProgress(`✓ Found ${parsed.length} headlines`);
 
-        // Replace global articles and STORE in browser
+        // Replace global articles
         articles.length = 0;
         parsed.forEach(p => articles.push(p));
         currentSourceUrl = sourceUrl;
         isLiveMode = true;
 
-        // Persist everything in the browser (localStorage)
+        // Pre-load full text for first few stories so they appear complete
+        const toPrefetch = Math.min(6, articles.length);
+        logProgress(`Loading full text for top ${toPrefetch} stories…`);
+        for (let i = 0; i < toPrefetch; i++) {
+          await loadFullArticle(articles[i]);
+        }
+
+        // Persist everything in the browser
         try {
           localStorage.setItem('tribuneSourceUrl', sourceUrl);
           localStorage.setItem('tribuneLiveMode', '1');
           localStorage.setItem('tribuneArticles', JSON.stringify(articles));
           localStorage.setItem('tribuneFetchedAt', new Date().toISOString());
+          logProgress('✓ All data saved in browser storage');
         } catch (e) {
-          console.warn('Could not save to localStorage', e);
+          logProgress('⚠ Could not save to localStorage (quota?)');
         }
 
         updateSourceLabels(sourceUrl);
         renderList();
         showView(homeView);
-        showToast(`Parsed & saved ${articles.length} stories in browser`);
+        if (spinner) spinner.textContent = '✅';
+        logProgress(`Done. ${articles.length} stories ready.`);
+        showToast(`Parsed & stored ${articles.length} stories`);
       } catch (err) {
         console.error(err);
-        showToast('Fetch failed (CORS / network). Try again or paste the link to Grok for reliable extraction.');
+        logProgress(`✗ Error: ${err.message || err}`);
+        showToast('Fetch failed. Try again or paste the link to Grok.');
+        if (spinner) spinner.textContent = '❌';
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Generate Reader';
