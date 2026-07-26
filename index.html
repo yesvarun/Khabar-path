@@ -829,7 +829,7 @@
         </div>
         <input type="url" class="paste-input" id="newLinkInput" placeholder="Paste any digital newspaper homepage link…" />
         <button class="paste-btn" id="submitNewLink">Generate Reader</button>
-        <p class="paste-hint">Works best with homepage URLs (e.g. tribuneindia.com, indianexpress.com, thehindu.com)</p>
+        <p class="paste-hint">Paste a homepage URL → app fetches & extracts stories online. Refresh button reloads the latest.</p>
       </div>
 
       <div id="articleList"></div>
@@ -1364,13 +1364,220 @@
     document.getElementById('closeSettings').addEventListener('click', () => settingsOverlay.classList.remove('show'));
     settingsOverlay.addEventListener('click', e => { if (e.target === settingsOverlay) settingsOverlay.classList.remove('show'); });
 
-    document.getElementById('refreshBtn').addEventListener('click', () => {
-      showToast('Content is curated offline. Paste a new link or ask Grok for the latest.');
-      // subtle animation
+    // ========== LIVE FETCH & PARSE ==========
+    let currentSourceUrl = localStorage.getItem('tribuneSourceUrl') || 'https://www.tribuneindia.com/';
+    let isLiveMode = localStorage.getItem('tribuneLiveMode') === '1';
+
+    async function fetchViaProxy(targetUrl) {
+      const proxies = [
+        u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+        u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+        u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`
+      ];
+      let lastErr;
+      for (const make of proxies) {
+        try {
+          const res = await fetch(make(targetUrl), { signal: AbortSignal.timeout(12000) });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const text = await res.text();
+          if (text && text.length > 500) return text;
+        } catch (e) { lastErr = e; }
+      }
+      throw lastErr || new Error('All proxies failed');
+    }
+
+    function absoluteUrl(base, href) {
+      try { return new URL(href, base).href; } catch { return null; }
+    }
+
+    function parseHomepage(html, baseUrl) {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const items = [];
+      const seen = new Set();
+
+      // Prefer article / headline links
+      const candidates = [
+        ...doc.querySelectorAll('article a[href], .story a[href], .news-item a[href], .card a[href], h2 a[href], h3 a[href], .headline a[href], a.story-link, a[href*="/news/"]')
+      ];
+
+      // Also generic links that look like articles
+      if (candidates.length < 8) {
+        candidates.push(...doc.querySelectorAll('a[href]'));
+      }
+
+      for (const a of candidates) {
+        let href = a.getAttribute('href') || '';
+        const title = (a.textContent || a.getAttribute('title') || '').replace(/\s+/g, ' ').trim();
+        if (!title || title.length < 18 || title.length > 180) continue;
+        if (/^(home|login|subscribe|advertisement|menu|search|sign|register|about|contact|privacy|terms|cookie)/i.test(title)) continue;
+
+        const full = absoluteUrl(baseUrl, href);
+        if (!full || seen.has(full)) continue;
+        // Skip non-article-looking URLs
+        if (/\/(tag|category|author|page|search|video|gallery|photo|live-blog)\//i.test(full) && !/\/news\//i.test(full)) continue;
+        if (full === baseUrl || full === baseUrl + '/') continue;
+
+        seen.add(full);
+
+        // Try to find nearby summary
+        let summary = '';
+        const parent = a.closest('article, .story, .card, .news-item, li, div') || a.parentElement;
+        if (parent) {
+          const p = parent.querySelector('p, .summary, .excerpt, .description, .dek');
+          if (p) summary = p.textContent.replace(/\s+/g, ' ').trim().slice(0, 180);
+        }
+
+        // Category guess from URL or nearby
+        let category = 'News';
+        const catMatch = full.match(/\/(india|world|sports|business|politics|delhi|punjab|haryana|opinion|entertainment|tech|education|j-k|jammu|kashmir)\//i);
+        if (catMatch) category = catMatch[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+        items.push({
+          id: items.length + 1,
+          category,
+          time: 'Live',
+          author: '',
+          title,
+          summary: summary || title.slice(0, 100) + '…',
+          url: full,
+          body: `<p>${summary || 'Loading full article…'}</p><p><em>Tap “Load full story” if available, or the summary above.</em></p>`
+        });
+
+        if (items.length >= 25) break;
+      }
+
+      // Fallback: OpenGraph / meta if almost nothing found
+      if (items.length < 3) {
+        const ogTitle = doc.querySelector('meta[property="og:title"]')?.content;
+        if (ogTitle) {
+          items.push({
+            id: 1, category: 'News', time: 'Live', author: '',
+            title: ogTitle,
+            summary: doc.querySelector('meta[property="og:description"]')?.content || '',
+            url: baseUrl,
+            body: `<p>${doc.querySelector('meta[property="og:description"]')?.content || ''}</p>`
+          });
+        }
+      }
+      return items;
+    }
+
+    async function loadFullArticle(article) {
+      if (!article.url || article._fullLoaded) return article;
+      try {
+        showToast('Fetching full story…');
+        const html = await fetchViaProxy(article.url);
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+
+        // Remove scripts, styles, nav
+        doc.querySelectorAll('script, style, nav, header, footer, aside, .ad, .advertisement, .related, .comments').forEach(el => el.remove());
+
+        let content = '';
+        const selectors = [
+          'article .story-content', 'article .content', '.article-body', '.story-body',
+          '.article__body', '.entry-content', '[itemprop="articleBody"]',
+          'article p', '.post-content p', 'main p'
+        ];
+        for (const sel of selectors) {
+          const nodes = doc.querySelectorAll(sel);
+          if (nodes.length >= 2) {
+            content = Array.from(nodes).map(n => {
+              const t = n.textContent.replace(/\s+/g, ' ').trim();
+              return t.length > 40 ? `<p>${t}</p>` : '';
+            }).filter(Boolean).join('');
+            if (content.length > 300) break;
+          }
+        }
+
+        if (content.length > 200) {
+          article.body = content;
+          article._fullLoaded = true;
+          // Update author / time if found
+          const author = doc.querySelector('[rel="author"], .author, .byline, [itemprop="author"]')?.textContent?.trim();
+          if (author) article.author = author.slice(0, 60);
+        } else {
+          article.body = `<p>${article.summary}</p><p><a href="${article.url}" target="_blank" rel="noopener">Open original article ↗</a></p>`;
+        }
+      } catch (e) {
+        article.body = `<p>${article.summary}</p><p><a href="${article.url}" target="_blank" rel="noopener">Open original article ↗</a></p>`;
+      }
+      return article;
+    }
+
+    async function fetchAndRender(sourceUrl, isRefresh = false) {
       const btn = document.getElementById('refreshBtn');
-      btn.style.transition = 'transform 0.5s';
+      const submitBtn = document.getElementById('submitNewLink');
+      btn.style.transition = 'transform 0.6s';
       btn.style.transform = 'rotate(360deg)';
-      setTimeout(() => { btn.style.transform = ''; }, 500);
+      submitBtn.disabled = true;
+      submitBtn.textContent = isRefresh ? 'Refreshing…' : 'Parsing…';
+
+      try {
+        showToast(isRefresh ? 'Fetching latest stories…' : 'Parsing newspaper online…');
+        const html = await fetchViaProxy(sourceUrl);
+        const parsed = parseHomepage(html, sourceUrl);
+
+        if (parsed.length === 0) {
+          showToast('Could not extract stories. Site may block scraping. Try another link or ask Grok.');
+          return;
+        }
+
+        // Replace global articles
+        articles.length = 0;
+        parsed.forEach(p => articles.push(p));
+        currentSourceUrl = sourceUrl;
+        isLiveMode = true;
+        localStorage.setItem('tribuneSourceUrl', sourceUrl);
+        localStorage.setItem('tribuneLiveMode', '1');
+
+        // Update UI labels
+        document.querySelector('.section-title').textContent = 'Latest Headlines';
+        document.querySelector('.section-sub').textContent = `${articles.length} stories · Live from ${new URL(sourceUrl).hostname}`;
+        document.querySelector('.date-badge').innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Live · ${new Date().toLocaleString()}`;
+
+        renderList();
+        showView(homeView);
+        showToast(`Loaded ${articles.length} stories`);
+      } catch (err) {
+        console.error(err);
+        showToast('Fetch failed (CORS / network). Try again or paste the link to Grok for reliable extraction.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Generate Reader';
+        setTimeout(() => { btn.style.transform = ''; }, 600);
+      }
+    }
+
+    // Override openArticle to load full text on demand for live articles
+    const originalOpenArticle = openArticle;
+    openArticle = async function(id) {
+      const a = articles.find(x => x.id === id);
+      if (!a) return;
+      document.getElementById('artCategory').textContent = a.category;
+      document.getElementById('artTitle').textContent = a.title;
+      document.getElementById('artAuthor').textContent = a.author ? `By ${a.author}` : '';
+      document.getElementById('artTime').textContent = a.time;
+      document.getElementById('artBody').innerHTML = a.body || '<p>Loading…</p>';
+      showView(articleView);
+      setTimeout(() => highlightLookedUpWords(), 30);
+      updateProgress();
+
+      if (a.url && !a._fullLoaded) {
+        await loadFullArticle(a);
+        if (articleView.classList.contains('active') && document.getElementById('artTitle').textContent === a.title) {
+          document.getElementById('artBody').innerHTML = a.body;
+          document.getElementById('artAuthor').textContent = a.author ? `By ${a.author}` : '';
+          setTimeout(() => highlightLookedUpWords(), 30);
+        }
+      }
+    };
+
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      if (currentSourceUrl) {
+        fetchAndRender(currentSourceUrl, true);
+      } else {
+        showToast('No source yet. Paste a newspaper link first.');
+      }
     });
 
     document.getElementById('fontUp').addEventListener('click', () => { settings.fontSize = Math.min(24, settings.fontSize + 1); applySettings(); });
@@ -1390,26 +1597,23 @@
 
     document.getElementById('vocabSearch').addEventListener('input', e => renderVocabulary(e.target.value));
 
-    // Paste new link
+    // Paste new link → live parse
     document.getElementById('submitNewLink').addEventListener('click', () => {
       const url = document.getElementById('newLinkInput').value.trim();
       if (!url) { showToast('Please paste a newspaper link first'); return; }
-      if (!url.startsWith('http')) { showToast('Please enter a valid URL'); return; }
-      document.getElementById('modalText').innerHTML = `I’ll extract headlines & full articles from:<br><strong style="word-break:break-all;font-size:13px">${url}</strong><br><br>Share this link with me in the chat and I’ll generate a fresh beautiful mobile reader for you in seconds.`;
-      modal.classList.add('show');
-      modal.dataset.url = url;
-    });
-    document.getElementById('modalCancel').addEventListener('click', () => modal.classList.remove('show'));
-    document.getElementById('modalConfirm').addEventListener('click', () => {
-      navigator.clipboard.writeText(modal.dataset.url).then(() => showToast('Link copied! Now paste it in the chat with Grok')).catch(() => showToast('Please copy the link and send it to Grok'));
-      modal.classList.remove('show');
+      if (!url.startsWith('http')) { showToast('Please enter a valid URL starting with https://'); return; }
+      fetchAndRender(url, false);
       document.getElementById('newLinkInput').value = '';
     });
+
+    // Keep modal for compatibility but hide usage
+    document.getElementById('modalCancel')?.addEventListener('click', () => modal.classList.remove('show'));
+    document.getElementById('modalConfirm')?.addEventListener('click', () => modal.classList.remove('show'));
 
     function showToast(msg) {
       toast.textContent = msg;
       toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2800);
+      setTimeout(() => toast.classList.remove('show'), 3200);
     }
 
     // Init
