@@ -829,7 +829,7 @@
         </div>
         <input type="url" class="paste-input" id="newLinkInput" placeholder="Paste any digital newspaper homepage link…" />
         <button class="paste-btn" id="submitNewLink">Generate Reader</button>
-        <p class="paste-hint">Paste a homepage URL → app fetches & extracts stories online. Refresh button reloads the latest.</p>
+        <p class="paste-hint">Paste link once → parses & stores in your browser. Opens instantly next time. Refresh updates the store.</p>
       </div>
 
       <div id="articleList"></div>
@@ -1364,9 +1364,37 @@
     document.getElementById('closeSettings').addEventListener('click', () => settingsOverlay.classList.remove('show'));
     settingsOverlay.addEventListener('click', e => { if (e.target === settingsOverlay) settingsOverlay.classList.remove('show'); });
 
-    // ========== LIVE FETCH & PARSE ==========
+    // ========== LIVE FETCH & PARSE + LOCAL STORE ==========
     let currentSourceUrl = localStorage.getItem('tribuneSourceUrl') || 'https://www.tribuneindia.com/';
     let isLiveMode = localStorage.getItem('tribuneLiveMode') === '1';
+
+    function updateSourceLabels(sourceUrl) {
+      try {
+        const host = new URL(sourceUrl).hostname.replace('www.', '');
+        const fetchedAt = localStorage.getItem('tribuneFetchedAt');
+        const timeStr = fetchedAt ? new Date(fetchedAt).toLocaleString() : new Date().toLocaleString();
+        document.querySelector('.section-title').textContent = 'Saved Headlines';
+        document.querySelector('.section-sub').textContent = `${articles.length} stories stored · ${host}`;
+        document.querySelector('.date-badge').innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Stored · ${timeStr}`;
+      } catch(e) {}
+    }
+
+    function restoreFromBrowser() {
+      try {
+        const saved = localStorage.getItem('tribuneArticles');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            articles.length = 0;
+            parsed.forEach(p => articles.push(p));
+            isLiveMode = true;
+            updateSourceLabels(currentSourceUrl);
+            return true;
+          }
+        }
+      } catch(e) {}
+      return false;
+    }
 
     async function fetchViaProxy(targetUrl) {
       const proxies = [
@@ -1501,6 +1529,8 @@
       } catch (e) {
         article.body = `<p>${article.summary}</p><p><a href="${article.url}" target="_blank" rel="noopener">Open original article ↗</a></p>`;
       }
+      // Persist updated body so next open is instant
+      try { localStorage.setItem('tribuneArticles', JSON.stringify(articles)); } catch(e) {}
       return article;
     }
 
@@ -1522,22 +1552,26 @@
           return;
         }
 
-        // Replace global articles
+        // Replace global articles and STORE in browser
         articles.length = 0;
         parsed.forEach(p => articles.push(p));
         currentSourceUrl = sourceUrl;
         isLiveMode = true;
-        localStorage.setItem('tribuneSourceUrl', sourceUrl);
-        localStorage.setItem('tribuneLiveMode', '1');
 
-        // Update UI labels
-        document.querySelector('.section-title').textContent = 'Latest Headlines';
-        document.querySelector('.section-sub').textContent = `${articles.length} stories · Live from ${new URL(sourceUrl).hostname}`;
-        document.querySelector('.date-badge').innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Live · ${new Date().toLocaleString()}`;
+        // Persist everything in the browser (localStorage)
+        try {
+          localStorage.setItem('tribuneSourceUrl', sourceUrl);
+          localStorage.setItem('tribuneLiveMode', '1');
+          localStorage.setItem('tribuneArticles', JSON.stringify(articles));
+          localStorage.setItem('tribuneFetchedAt', new Date().toISOString());
+        } catch (e) {
+          console.warn('Could not save to localStorage', e);
+        }
 
+        updateSourceLabels(sourceUrl);
         renderList();
         showView(homeView);
-        showToast(`Loaded ${articles.length} stories`);
+        showToast(`Parsed & saved ${articles.length} stories in browser`);
       } catch (err) {
         console.error(err);
         showToast('Fetch failed (CORS / network). Try again or paste the link to Grok for reliable extraction.');
@@ -1616,10 +1650,15 @@
       setTimeout(() => toast.classList.remove('show'), 3200);
     }
 
-    // Init
+    // Init – restore previously parsed stories from browser storage (instant)
     applySettings();
     updateVocabBadge();
-    renderList();
+    if (restoreFromBrowser()) {
+      renderList();
+      showToast(`Restored ${articles.length} saved stories from browser`);
+    } else {
+      renderList(); // fallback to built-in Tribune data
+    }
   </script>
 </body>
 </html>
