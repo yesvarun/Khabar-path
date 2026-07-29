@@ -1382,8 +1382,7 @@
         document.getElementById('dictLoading').style.display = 'none';
         document.getElementById('dictContent').style.display = 'block';
 
-        // Immediately mark the word with dull color
-        markWordLookedUp(currentDictWord.word);
+        // No persistent highlight — popup only
       } catch (err) {
         currentDictWord = { word, phonetic: '', meaning: 'Definition not found. Check spelling or try again later.' };
         document.getElementById('dictWord').textContent = word;
@@ -1391,7 +1390,6 @@
         document.getElementById('dictMeaning').textContent = currentDictWord.meaning;
         document.getElementById('dictLoading').style.display = 'none';
         document.getElementById('dictContent').style.display = 'block';
-        markWordLookedUp(word);
       }
     }
 
@@ -1416,7 +1414,6 @@
         date: Date.now()
       });
       saveVocabulary();
-      markWordLookedUp(currentDictWord.word);
       showToast(`“${currentDictWord.word}” saved`);
       closeDict();
     }
@@ -1510,8 +1507,6 @@
       document.getElementById('artTime').textContent = a.time;
       document.getElementById('artBody').innerHTML = a.body;
       showView(articleView);
-      // Highlight any previously looked-up words
-      setTimeout(() => highlightLookedUpWords(), 30);
       updateProgress();
     }
 
@@ -1565,6 +1560,16 @@
     function restoreFromBrowser() {
       try {
         const saved = localStorage.getItem('tribuneArticles');
+        const fetchedAt = localStorage.getItem('tribuneFetchedAt');
+        // Drop cache older than 36 hours so stale news doesn't linger
+        if (fetchedAt) {
+          const ageMs = Date.now() - new Date(fetchedAt).getTime();
+          if (ageMs > 36 * 60 * 60 * 1000) {
+            localStorage.removeItem('tribuneArticles');
+            localStorage.removeItem('tribuneFetchedAt');
+            return false;
+          }
+        }
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -1744,6 +1749,30 @@
         .trim();
     }
 
+    // Strip repeated newspaper boilerplate (Tribune founder history, subscribe prompts, etc.)
+    function cleanBoilerplate(html) {
+      if (!html) return html;
+      const patterns = [
+        /Sardar\s+Dyal\s+Singh\s+Majithia[\s\S]{0,400}/gi,
+        /Dyal\s+Singh\s+Majithia[\s\S]{0,300}/gi,
+        /founded\s+(?:in\s+)?1881[\s\S]{0,200}/gi,
+        /The\s+Tribune\s+(?:Trust|was\s+founded|is\s+published)[\s\S]{0,250}/gi,
+        /Subscribe\s+to\s+The\s+Tribune[\s\S]{0,150}/gi,
+        /Download\s+The\s+Tribune\s+App[\s\S]{0,120}/gi,
+        /Follow\s+The\s+Tribune\s+on[\s\S]{0,100}/gi,
+        /Also\s+Read\s*:[\s\S]{0,200}/gi,
+        /Related\s+(?:News|Stories|Articles)\s*:[\s\S]{0,300}/gi,
+        /Share\s+this\s+article[\s\S]{0,80}/gi,
+        /Click\s+here\s+to\s+subscribe[\s\S]{0,100}/gi,
+        /Advertisement[\s\S]{0,50}/gi
+      ];
+      let out = html;
+      patterns.forEach(re => { out = out.replace(re, ' '); });
+      // Drop paragraphs that are mostly boilerplate keywords
+      out = out.replace(/<p[^>]*>[\s\S]*?(?:Dyal\s+Singh|Majithia|Tribune\s+Trust|Subscribe\s+now)[\s\S]*?<\/p>/gi, '');
+      return out.replace(/(<p>\s*<\/p>)+/g, '').trim();
+    }
+
     async function loadFullArticle(article) {
       if (!article.url || article._fullLoaded) return article;
       try {
@@ -1767,6 +1796,8 @@
           if (nodes.length >= 2) {
             content = Array.from(nodes).map(n => {
               const t = getCleanText(n);
+              // Skip boilerplate paragraphs
+              if (/Dyal\s+Singh|Majithia|Tribune\s+Trust|Subscribe\s+to\s+The\s+Tribune/i.test(t)) return '';
               return t.length > 35 ? `<p>${t}</p>` : '';
             }).filter(Boolean).join('');
             if (content.length > 400) break;
@@ -1777,11 +1808,13 @@
         if (content.length < 300) {
           const allP = Array.from(doc.querySelectorAll('p'))
             .map(p => getCleanText(p))
-            .filter(t => t.length > 60);
+            .filter(t => t.length > 60 && !/Dyal\s+Singh|Majithia|Tribune\s+Trust|Subscribe\s+to\s+The\s+Tribune/i.test(t));
           if (allP.length >= 3) {
             content = allP.slice(0, 25).map(t => `<p>${t}</p>`).join('');
           }
         }
+
+        content = cleanBoilerplate(content);
 
         if (content.length > 200) {
           article.body = content;
@@ -1790,7 +1823,6 @@
           if (author) article.author = author.slice(0, 60);
           logProgress(`✓ Full story saved (${Math.round(content.length/100)/10}k chars)`);
         } else {
-          // Keep summary only – no external link as main content
           article.body = `<p>${article.summary || 'Full text could not be extracted from this page.'}</p>`;
           logProgress(`⚠ Only summary available for this story`);
         }
@@ -1811,9 +1843,20 @@
       submitBtn.disabled = true;
       submitBtn.textContent = isRefresh ? 'Refreshing…' : 'Parsing…';
       clearProgress();
-      logProgress(isRefresh ? 'Refreshing source…' : 'Starting parse…');
+      logProgress(isRefresh ? 'Refreshing — clearing old stories…' : 'Starting parse…');
       logProgress(`Target: ${sourceUrl}`);
       if (spinner) spinner.textContent = '⏳';
+
+      // On refresh: wipe old feed immediately so stale news never sticks
+      if (isRefresh) {
+        articles.length = 0;
+        renderList();
+        try {
+          localStorage.removeItem('tribuneArticles');
+          localStorage.removeItem('tribuneFetchedAt');
+        } catch (e) {}
+        logProgress('Old feed cleared from browser');
+      }
 
       try {
         logProgress('Connecting via proxy…');
@@ -1828,9 +1871,9 @@
           showToast('Could not extract stories. Try another link or ask Grok.');
           return;
         }
-        logProgress(`✓ Found ${parsed.length} headlines`);
+        logProgress(`✓ Found ${parsed.length} fresh headlines`);
 
-        // Replace global articles
+        // Full replace — never keep old stories
         articles.length = 0;
         parsed.forEach(p => articles.push(p));
         currentSourceUrl = sourceUrl;
@@ -1843,13 +1886,13 @@
           await loadFullArticle(articles[i]);
         }
 
-        // Persist everything in the browser
+        // Persist ONLY the new feed
         try {
           localStorage.setItem('tribuneSourceUrl', sourceUrl);
           localStorage.setItem('tribuneLiveMode', '1');
           localStorage.setItem('tribuneArticles', JSON.stringify(articles));
           localStorage.setItem('tribuneFetchedAt', new Date().toISOString());
-          logProgress('✓ All data saved in browser storage');
+          logProgress('✓ Fresh feed saved in browser storage');
         } catch (e) {
           logProgress('⚠ Could not save to localStorage (quota?)');
         }
@@ -1858,8 +1901,8 @@
         renderList();
         showView(homeView);
         if (spinner) spinner.textContent = '✅';
-        logProgress(`Done. ${articles.length} stories ready.`);
-        showToast(`Parsed & stored ${articles.length} stories`);
+        logProgress(`Done. ${articles.length} new stories ready.`);
+        showToast(isRefresh ? `Refreshed — ${articles.length} new stories` : `Parsed & stored ${articles.length} stories`);
       } catch (err) {
         console.error(err);
         logProgress(`✗ Error: ${err.message || err}`);
@@ -1883,7 +1926,6 @@
       document.getElementById('artTime').textContent = a.time;
       document.getElementById('artBody').innerHTML = a.body || '<p>Loading…</p>';
       showView(articleView);
-      setTimeout(() => highlightLookedUpWords(), 30);
       updateProgress();
 
       if (a.url && !a._fullLoaded) {
@@ -1891,7 +1933,6 @@
         if (articleView.classList.contains('active') && document.getElementById('artTitle').textContent === a.title) {
           document.getElementById('artBody').innerHTML = a.body;
           document.getElementById('artAuthor').textContent = a.author ? `By ${a.author}` : '';
-          setTimeout(() => highlightLookedUpWords(), 30);
         }
       }
     };
