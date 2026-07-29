@@ -197,6 +197,54 @@
     }
     .paste-card:focus-within { border-color: var(--accent); }
 
+    .pin-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+    .pin-bar.hidden { display: none; }
+    .pin-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pin-url {
+      font-size: 13px;
+      color: var(--text);
+      word-break: break-all;
+      line-height: 1.4;
+      margin-bottom: 12px;
+      opacity: 0.9;
+    }
+    .pin-actions { display: flex; gap: 8px; }
+    .pin-btn {
+      flex: 1;
+      padding: 11px 12px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .pin-btn.primary { background: var(--accent); color: #fff; }
+    .pin-btn.danger {
+      background: var(--bg);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      flex: 0 0 auto;
+      padding: 11px 14px;
+    }
+    .pin-btn:active { opacity: 0.85; }
+
     .paste-label {
       font-size: 13px;
       font-weight: 600;
@@ -967,14 +1015,27 @@
       <h1 class="section-title">Today’s Headlines</h1>
       <p class="section-sub">12 stories curated for easy mobile reading</p>
 
-      <div class="paste-card">
+      <!-- Pinned source — one-tap fresh parse -->
+      <div class="pin-bar hidden" id="pinBar">
+        <div class="pin-label">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5v6l1 1 1-1v-6h5v-2l-2-2z"/></svg>
+          Pinned newspaper
+        </div>
+        <div class="pin-url" id="pinUrlText"></div>
+        <div class="pin-actions">
+          <button class="pin-btn primary" id="pinParseBtn">Parse fresh</button>
+          <button class="pin-btn danger" id="pinDeleteBtn" title="Remove pin">Unpin</button>
+        </div>
+      </div>
+
+      <div class="paste-card" id="pasteCard">
         <div class="paste-label">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          Load a different newspaper
+          Load a newspaper
         </div>
         <input type="url" class="paste-input" id="newLinkInput" placeholder="Paste any digital newspaper homepage link…" />
-        <button class="paste-btn" id="submitNewLink">Generate Reader</button>
-        <p class="paste-hint">Paste link once → parses & stores full stories in your browser. Progress log appears below.</p>
+        <button class="paste-btn" id="submitNewLink">Pin &amp; Parse</button>
+        <p class="paste-hint">Link is pinned after first parse. Next time just tap “Parse fresh”.</p>
       </div>
 
       <!-- Live progress log -->
@@ -1543,8 +1604,41 @@
     settingsOverlay.addEventListener('click', e => { if (e.target === settingsOverlay) settingsOverlay.classList.remove('show'); });
 
     // ========== LIVE FETCH & PARSE + LOCAL STORE ==========
-    let currentSourceUrl = localStorage.getItem('tribuneSourceUrl') || 'https://www.tribuneindia.com/';
+    let currentSourceUrl = localStorage.getItem('tribuneSourceUrl') || '';
     let isLiveMode = localStorage.getItem('tribuneLiveMode') === '1';
+
+    function updatePinBar() {
+      const bar = document.getElementById('pinBar');
+      const pasteCard = document.getElementById('pasteCard');
+      const urlText = document.getElementById('pinUrlText');
+      if (!bar) return;
+      if (currentSourceUrl) {
+        bar.classList.remove('hidden');
+        urlText.textContent = currentSourceUrl;
+        // Keep paste card for switching papers, but smaller visual priority
+        if (pasteCard) pasteCard.style.opacity = '0.85';
+      } else {
+        bar.classList.add('hidden');
+        if (pasteCard) pasteCard.style.opacity = '1';
+      }
+    }
+
+    function unpinSource() {
+      currentSourceUrl = '';
+      isLiveMode = false;
+      try {
+        localStorage.removeItem('tribuneSourceUrl');
+        localStorage.removeItem('tribuneLiveMode');
+        localStorage.removeItem('tribuneArticles');
+        localStorage.removeItem('tribuneFetchedAt');
+      } catch (e) {}
+      articles.length = 0;
+      renderList();
+      updatePinBar();
+      document.querySelector('.section-title').textContent = 'Today’s Headlines';
+      document.querySelector('.section-sub').textContent = 'Pin a newspaper link to get started';
+      showToast('Pin removed');
+    }
 
     function updateSourceLabels(sourceUrl) {
       try {
@@ -1934,11 +2028,12 @@
         }
 
         updateSourceLabels(sourceUrl);
+        updatePinBar();
         renderList();
         showView(homeView);
         if (spinner) spinner.textContent = '✅';
         logProgress(`Done. ${articles.length} new stories ready.`);
-        showToast(isRefresh ? `Refreshed — ${articles.length} new stories` : `Parsed & stored ${articles.length} stories`);
+        showToast(isRefresh ? `Refreshed — ${articles.length} new stories` : `Pinned & stored ${articles.length} stories`);
       } catch (err) {
         console.error(err);
         logProgress(`✗ Error: ${err.message || err}`);
@@ -1946,7 +2041,7 @@
         if (spinner) spinner.textContent = '❌';
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Generate Reader';
+        submitBtn.textContent = 'Pin & Parse';
         setTimeout(() => { btn.style.transform = ''; }, 600);
       }
     }
@@ -2005,6 +2100,18 @@
       if (!url.startsWith('http')) { showToast('Please enter a valid URL starting with https://'); return; }
       fetchAndRender(url, false);
       document.getElementById('newLinkInput').value = '';
+    });
+
+    document.getElementById('pinParseBtn').addEventListener('click', () => {
+      if (!currentSourceUrl) {
+        showToast('No pinned link. Paste a URL first.');
+        return;
+      }
+      fetchAndRender(currentSourceUrl, true);
+    });
+
+    document.getElementById('pinDeleteBtn').addEventListener('click', () => {
+      if (confirm('Remove the pinned newspaper link?')) unpinSource();
     });
 
     // Keep modal for compatibility but hide usage
@@ -2107,11 +2214,14 @@
     // Init – restore previously parsed stories from browser storage (instant)
     applySettings();
     updateVocabBadge();
+    updatePinBar();
     if (restoreFromBrowser()) {
       renderList();
+      updatePinBar();
       showToast(`Restored ${articles.length} saved stories from browser`);
     } else {
-      renderList(); // fallback to built-in Tribune data
+      renderList();
+      updatePinBar();
     }
   </script>
 </body>
