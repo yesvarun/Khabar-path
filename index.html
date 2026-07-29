@@ -1644,11 +1644,17 @@
         candidates.push(...doc.querySelectorAll('a[href]'));
       }
 
+      // Section / hub / promo titles that are NOT real news articles
+      const sectionTitleRe = /^(the\s+tribune\s+)?(science|sports|business|world|india|delhi|punjab|haryana|opinion|editorials?|features?|photos?|videos?|city|nation|trending|premium|e-?paper|crossword|horoscope|weather|inside\s+the\s+capital|assembly\s+elections?(\s+\d{4})?|operation\s+sindoor(\s*:?\s*one\s+year)?|top\s+headlines?|latest\s+news|more\s+news|view\s+all|read\s+more|web\s+stories?)$/i;
+
       for (const a of candidates) {
         let href = a.getAttribute('href') || '';
         const title = getCleanText(a) || (a.getAttribute('title') || '').replace(/\s+/g, ' ').trim();
-        if (!title || title.length < 18 || title.length > 180) continue;
-        if (/^(home|login|subscribe|advertisement|menu|search|sign|register|about|contact|privacy|terms|cookie)/i.test(title)) continue;
+        if (!title || title.length < 22 || title.length > 180) continue;
+        if (/^(home|login|subscribe|advertisement|menu|search|sign|register|about|contact|privacy|terms|cookie|follow|share)/i.test(title)) continue;
+        // Kill section labels & special hub pages
+        if (sectionTitleRe.test(title.trim())) continue;
+        if (/^(the\s+tribune)\s/i.test(title) && title.split(/\s+/).length <= 4) continue;
 
         const full = absoluteUrl(baseUrl, href);
         if (!full) continue;
@@ -1656,25 +1662,30 @@
         const normUrl = normalizeUrl(full);
         const tKey = titleKey(title);
 
-        // Skip if we've already seen this URL or a very similar title
         if (seenUrls.has(normUrl) || seenTitles.has(tKey)) continue;
 
-        // Skip non-article-looking URLs
-        if (/\/(tag|category|author|page|search|video|gallery|photo|live-blog)\//i.test(full) && !/\/news\//i.test(full)) continue;
+        // Must look like a real article URL (path has enough depth / news slug)
+        const path = (() => { try { return new URL(full).pathname; } catch { return ''; } })();
+        if (!path || path === '/' || path.split('/').filter(Boolean).length < 2) continue;
+        if (/\/(tag|category|author|page|search|video|gallery|photo|live-blog|topic|section|epaper|subscribe|premium|science\/?$|sports\/?$|business\/?$|world\/?$|india\/?$)\b/i.test(full) && !/\/news\/[^/]+\/[^/]+/i.test(full)) continue;
         if (normUrl === normalizeUrl(baseUrl)) continue;
+        // Skip pure section hubs like /news/science or /news/operation-sindoor
+        if (/\/news\/[a-z0-9-]+\/?$/i.test(path) && path.split('/').filter(Boolean).length <= 2) continue;
 
         seenUrls.add(normUrl);
         seenTitles.add(tKey);
 
-        // Try to find nearby summary
         let summary = '';
         const parent = a.closest('article, .story, .card, .news-item, li, div') || a.parentElement;
         if (parent) {
           const p = parent.querySelector('p, .summary, .excerpt, .description, .dek');
-          if (p) summary = getCleanText(p).slice(0, 180);
+          if (p) {
+            const s = getCleanText(p).slice(0, 180);
+            // Don't use summary that is just the title repeated
+            if (s && titleKey(s) !== tKey) summary = s;
+          }
         }
 
-        // Category guess from URL or nearby
         let category = 'News';
         const catMatch = full.match(/\/(india|world|sports|business|politics|delhi|punjab|haryana|opinion|entertainment|tech|education|j-k|jammu|kashmir)\//i);
         if (catMatch) category = catMatch[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -1685,7 +1696,7 @@
           time: 'Live',
           author: '',
           title,
-          summary: summary || title.slice(0, 100) + '…',
+          summary: summary || '',
           url: full,
           body: `<p>${summary || 'Full story will load when you open it…'}</p>`
         });
