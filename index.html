@@ -1573,8 +1573,20 @@
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
+            // Drop junk section titles from old cache
+            const clean = parsed.filter(p => {
+              const t = (p.title || '');
+              if (/operation\s*sindoor|assembly\s*elections?|letters?\s+to\s+the\s+editor|inside\s+the\s+capital|the\s+tribune\s+science/i.test(t)) return false;
+              if (t.length < 28) return false;
+              return true;
+            });
+            if (clean.length === 0) {
+              localStorage.removeItem('tribuneArticles');
+              return false;
+            }
             articles.length = 0;
-            parsed.forEach(p => articles.push(p));
+            clean.forEach((p, i) => { p.id = i + 1; articles.push(p); });
+            try { localStorage.setItem('tribuneArticles', JSON.stringify(articles)); } catch(e) {}
             isLiveMode = true;
             updateSourceLabels(currentSourceUrl);
             return true;
@@ -1644,17 +1656,29 @@
         candidates.push(...doc.querySelectorAll('a[href]'));
       }
 
-      // Section / hub / promo titles that are NOT real news articles
-      const sectionTitleRe = /^(the\s+tribune\s+)?(science|sports|business|world|india|delhi|punjab|haryana|opinion|editorials?|features?|photos?|videos?|city|nation|trending|premium|e-?paper|crossword|horoscope|weather|inside\s+the\s+capital|assembly\s+elections?(\s+\d{4})?|operation\s+sindoor(\s*:?\s*one\s+year)?|top\s+headlines?|latest\s+news|more\s+news|view\s+all|read\s+more|web\s+stories?)$/i;
+      function isJunkTitle(title) {
+        const t = (title || '').replace(/\s+/g, ' ').trim();
+        if (!t || t.length < 28 || t.length > 180) return true;
+        if (/operation\s*sindoor/i.test(t)) return true;
+        if (/assembly\s*elections?/i.test(t) && t.split(/\s+/).length <= 6) return true;
+        if (/letters?\s+to\s+the\s+editor/i.test(t)) return true;
+        if (/inside\s+the\s+capital/i.test(t)) return true;
+        if (/the\s+tribune\s+(science|sports|business|world|india|city|nation)/i.test(t)) return true;
+        if (/^(science|sports|business|world|india|delhi|punjab|haryana|opinion|editorials?|features?|photos?|videos?|city|nation|trending|premium|e-?paper|crossword|horoscope|weather|top\s+headlines?|latest\s+news|more\s+news|view\s+all|read\s+more|web\s+stories?|cartoon|obituary|classifieds?)$/i.test(t)) return true;
+        if (/^(home|login|subscribe|advertisement|menu|search|sign|register|about|contact|privacy|terms|cookie|follow|share)/i.test(t)) return true;
+        if (/^the\s+tribune\b/i.test(t) && t.split(/\s+/).length <= 5) return true;
+        // Short title-case labels without news-like structure
+        const words = t.split(/\s+/);
+        if (words.length <= 5 && !/\b(says?|said|after|over|amid|as|from|with|for|will|is|are|has|have|held|wins?|loses?|kills?|dies?|dies|arrest|probe|court|govt|minister|pm|cm)\b/i.test(t)) {
+          if (/one\s+year|special|coverage|live\s+updates?|explainer/i.test(t)) return true;
+        }
+        return false;
+      }
 
       for (const a of candidates) {
         let href = a.getAttribute('href') || '';
         const title = getCleanText(a) || (a.getAttribute('title') || '').replace(/\s+/g, ' ').trim();
-        if (!title || title.length < 22 || title.length > 180) continue;
-        if (/^(home|login|subscribe|advertisement|menu|search|sign|register|about|contact|privacy|terms|cookie|follow|share)/i.test(title)) continue;
-        // Kill section labels & special hub pages
-        if (sectionTitleRe.test(title.trim())) continue;
-        if (/^(the\s+tribune)\s/i.test(title) && title.split(/\s+/).length <= 4) continue;
+        if (isJunkTitle(title)) continue;
 
         const full = absoluteUrl(baseUrl, href);
         if (!full) continue;
@@ -1666,11 +1690,12 @@
 
         // Must look like a real article URL (path has enough depth / news slug)
         const path = (() => { try { return new URL(full).pathname; } catch { return ''; } })();
-        if (!path || path === '/' || path.split('/').filter(Boolean).length < 2) continue;
-        if (/\/(tag|category|author|page|search|video|gallery|photo|live-blog|topic|section|epaper|subscribe|premium|science\/?$|sports\/?$|business\/?$|world\/?$|india\/?$)\b/i.test(full) && !/\/news\/[^/]+\/[^/]+/i.test(full)) continue;
+        if (!path || path === '/' || path.split('/').filter(Boolean).length < 3) continue;
+        if (/\/(tag|category|author|page|search|video|gallery|photo|live-blog|topic|section|epaper|subscribe|premium)\b/i.test(full)) continue;
         if (normUrl === normalizeUrl(baseUrl)) continue;
-        // Skip pure section hubs like /news/science or /news/operation-sindoor
+        // Skip section hubs: /news/science, /news/operation-sindoor, etc.
         if (/\/news\/[a-z0-9-]+\/?$/i.test(path) && path.split('/').filter(Boolean).length <= 2) continue;
+        if (/sindoor|assembly-election|letters-to-the-editor|inside-the-capital/i.test(path)) continue;
 
         seenUrls.add(normUrl);
         seenTitles.add(tKey);
